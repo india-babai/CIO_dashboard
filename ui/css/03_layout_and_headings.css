@@ -1,0 +1,81 @@
+/* ===========================================================================
+   03 — LAYOUT & HEADINGS.  Page width, the top bar, section headings, cards.
+   ===========================================================================
+
+   The HTML for these classes is written by:
+       app.py                 -> .cio-topbar, .cio-foot
+       ui/widgets.py          -> .cio-kicker, .cio-h, .cio-lede, .cio-card-title
+       ui/page_portfolios.py  -> .mp-meta
+
+   COMMON TWEAKS
+     * Page too narrow / too wide  -> .block-container max-width
+     * Section heading size        -> .cio-h font-size
+     * Card corner / padding       -> [data-testid="stVerticalBlockBorderWrapper"]
+   =========================================================================== */
+
+/* ---- page width & rhythm -------------------------------------------- */
+.block-container {
+  padding-top: 1.1rem;
+  padding-bottom: 4rem;
+  max-width: 1720px;        /* <- widen/narrow the whole app here */
+}
+[data-testid="stVerticalBlock"] { gap: 0.9rem; }
+hr { border-color: var(--line-soft); margin: 0.6rem 0; }
+
+/* ---- top bar (app.py) ------------------------------------------------ */
+.cio-topbar {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 0.75rem 1.5rem; flex-wrap: wrap;
+  padding: 0.2rem 0 0.9rem 0; margin-bottom: 0.4rem;
+  border-bottom: 1px solid var(--line);
+}
+.cio-brand { display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; }
+.cio-brand .mark {
+  font-family: var(--serif); font-weight: 600; font-size: 1.35rem;
+  letter-spacing: -0.01em; color: var(--ink); white-space: nowrap;
+}
+.cio-brand .mark .dot { color: var(--accent); }
+.cio-brand .sub {
+  font-size: 0.78rem; color: var(--mute); text-transform: uppercase;
+  letter-spacing: 0.13em; font-weight: 500;
+}
+.cio-meta { font-size: 0.78rem; color: var(--mute); text-align: right; line-height: 1.5; }
+.cio-meta b { color: var(--ink-soft); font-weight: 600; }
+
+/* ---- section headings (ui/widgets.py section_heading) ---------------- */
+.cio-kicker {                 /* small maroon word above the title */
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.16em;
+  color: var(--accent); font-weight: 600; margin: 0.2rem 0 0.15rem 0;
+}
+.cio-h {                      /* the serif section title */
+  font-family: var(--serif); font-weight: 500; font-size: 1.5rem;
+  letter-spacing: -0.01em; color: var(--ink); margin: 0 0 0.15rem 0;
+}
+.cio-lede { color: var(--mute); font-size: 0.9rem; margin-bottom: 0.2rem; }
+
+/* ---- cards: any st.container(border=True) --------------------------- */
+[data-testid="stVerticalBlockBorderWrapper"] {
+  background: var(--card);
+  border: 1px solid var(--line) !important;
+  border-radius: 14px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 1px 2px rgba(31, 41, 51, .03);
+}
+/* a card inside a card gets a lighter treatment */
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlockBorderWrapper"] {
+  box-shadow: none; border-radius: 10px; padding: 0.9rem 1rem;
+}
+
+/* small uppercase title inside a card (ui/widgets.py card_title) */
+.cio-card-title {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--mute); font-weight: 600; margin-bottom: 0.55rem;
+}
+
+/* the one-line model summary under the dropdown */
+.mp-meta { color: var(--ink-soft); font-size: 0.82rem; padding-top: 0.4rem; }
+
+/* page footer */
+.cio-foot {
+  color: var(--mute); font-size: 0.75rem; text-align: center; margin-top: 2.5rem;
+}

@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="700" viewBox="0 0 960 700" font-family="Segoe UI, Inter, Helvetica, Arial, sans-serif">
+  <style>
+    .bg    { fill: #FFFFFF; }
+    .box   { fill: #FFFFFF; stroke: #D9D4D2; stroke-width: 1.2; rx: 6; }
+    .boxhi { fill: #FCF7F8; stroke: #7A1F2B; stroke-width: 1.6; rx: 6; }
+    .inner { fill: #F6F3F2; stroke: #E4E4E4; stroke-width: 1; rx: 4; }
+    .title { font-size: 21px; font-weight: 700; fill: #17161A; }
+    .sub   { font-size: 12.5px; fill: #7A6E71; }
+    .name  { font-size: 14px; font-weight: 600; fill: #1A1719; }
+    .desc  { font-size: 11.5px; fill: #7A6E71; }
+    .file  { font-size: 12px; font-weight: 600; fill: #7A1F2B;
+             font-family: Consolas, "Courier New", monospace; }
+    .file2 { font-size: 11px; fill: #8A8385;
+             font-family: Consolas, "Courier New", monospace; }
+    .tiny  { font-size: 10px; fill: #8A8385; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="960" height="700"/>
+
+  <text class="title" x="30" y="34">PAGE 2 — Capital Market Assumptions</text>
+  <text class="sub"   x="30" y="55">The numbers every risk/return figure is built from. Edits here are private to your browser session.</text>
+  <line x1="30" y1="66" x2="930" y2="66" stroke="#E4E4E4" stroke-width="1"/>
+
+  <!-- amber banner -->
+  <rect x="30" y="80" width="900" height="34" rx="6" fill="#FFF8EC" stroke="#F0DBB0"/>
+  <rect x="44" y="89" width="46" height="16" rx="4" fill="#E8A33D"/>
+  <text x="52" y="101" font-size="9" font-weight="700" fill="#FFFFFF">EDITED</text>
+  <text class="desc" x="100" y="101">CMA edited for this session only — 1 change (USD) … Not saved; other users are unaffected.</text>
+  <text class="file" x="920" y="101" text-anchor="end">app.py  _render_session_banner()</text>
+
+  <!-- heading -->
+  <rect class="box" x="30" y="122" width="900" height="50"/>
+  <text x="46" y="139" font-size="9" font-weight="700" fill="#7A1F2B" letter-spacing="1.4">INPUTS</text>
+  <text x="46" y="157" font-size="15" fill="#1A1719" font-family="Georgia, serif">Capital market assumptions</text>
+  <text class="file" x="920" y="148" text-anchor="end">ui/page_cma.py  render()</text>
+
+  <!-- currency picker -->
+  <rect class="box" x="30" y="180" width="900" height="42"/>
+  <rect class="inner" x="46"  y="192" width="38" height="17"/><text x="56"  y="204" font-size="9.5" fill="#7A1F2B">USD</text>
+  <rect class="inner" x="90"  y="192" width="38" height="17"/><text x="100" y="204" font-size="9.5" fill="#7A6E71">SGD</text>
+  <rect class="inner" x="134" y="192" width="38" height="17"/><text x="144" y="204" font-size="9.5" fill="#7A6E71">EUR</text>
+  <rect class="inner" x="178" y="192" width="38" height="17"/><text x="188" y="204" font-size="9.5" fill="#7A6E71">GBP</text>
+  <text class="desc" x="240" y="205">one CMA file set per currency  ·  “USD matches the imported CMA.”</text>
+  <text class="file" x="920" y="205" text-anchor="end">settings.toml  currencies</text>
+
+  <!-- tabs -->
+  <rect class="box" x="30" y="230" width="900" height="30"/>
+  <text x="46"  y="250" font-size="11" font-weight="600" fill="#7A1F2B">Assumptions</text>
+  <line x1="42" y1="255" x2="118" y2="255" stroke="#7A1F2B" stroke-width="2"/>
+  <text x="140" y="250" font-size="11" fill="#7A6E71">Correlation matrix</text>
+  <text x="270" y="250" font-size="11" fill="#7A6E71">Change log</text>
+  <text class="file" x="920" y="250" text-anchor="end">ui/page_cma.py  st.tabs(...)</text>
+
+  <!-- tab 1 -->
+  <rect class="boxhi" x="30" y="268" width="900" height="150"/>
+  <text class="name" x="46" y="288">Tab 1 — Assumptions   (the only editable thing on this page)</text>
+  <text class="file" x="920" y="288" text-anchor="end">ui/page_cma.py  _assumptions_tab()</text>
+
+  <rect x="46" y="298" width="620" height="18" fill="#F6F3F2" stroke="#E4E4E4"/>
+  <text x="54"  y="311" font-size="9" font-weight="600" fill="#453C3F">Code</text>
+  <text x="104" y="311" font-size="9" font-weight="600" fill="#453C3F">Asset class</text>
+  <text x="250" y="311" font-size="9" font-weight="600" fill="#453C3F">Group</text>
+  <text x="330" y="311" font-size="9" font-weight="600" fill="#7A1F2B">Expected return %</text>
+  <text x="440" y="311" font-size="9" font-weight="600" fill="#7A1F2B">Volatility %</text>
+  <text x="530" y="311" font-size="9" font-weight="600" fill="#453C3F">Base ER %</text>
+  <text x="606" y="311" font-size="9" font-weight="600" fill="#453C3F">Overridden</text>
+
+  <rect x="46" y="316" width="620" height="16" fill="#FFFFFF" stroke="#EDEDED"/>
+  <text x="54" y="328" font-size="9" fill="#1A1719">EME    Emerging Markets Equity        Equity            8.20            21.00        8.20</text>
+  <rect x="46" y="332" width="620" height="16" fill="#FFFFFF" stroke="#EDEDED"/>
+  <text x="54" y="344" font-size="9" fill="#1A1719">DME    Developed Markets Equity      Equity            7.10            16.00        7.10</text>
+
+  <rect class="inner" x="46"  y="358" width="70" height="17" fill="#7A1F2B" stroke="#7A1F2B"/>
+  <text x="60" y="370" font-size="9.5" fill="#FFFFFF">Apply (1)</text>
+  <rect class="inner" x="124" y="358" width="106" height="17"/>
+  <text x="134" y="370" font-size="9.5" fill="#453C3F">Reset USD to base</text>
+  <rect class="inner" x="238" y="358" width="112" height="17"/>
+  <text x="248" y="370" font-size="9.5" fill="#453C3F">Reset ALL currencies</text>
+
+  <text class="tiny" x="690" y="306">Only Expected return % and Volatility %</text>
+  <text class="tiny" x="690" y="320">are editable — see EDITABLE_FIELDS in</text>
+  <text class="tiny" x="690" y="334">core/cma_store.py.</text>
+  <text class="tiny" x="690" y="356">“Base ER %” always shows the number as</text>
+  <text class="tiny" x="690" y="370">imported, so you can see what you changed.</text>
+  <text class="tiny" x="690" y="392">Type back to the base value to clear an</text>
+  <text class="tiny" x="690" y="406">override entirely.</text>
+
+  <text class="desc" x="46" y="392">Edits land in st.session_state, never on disk.</text>
+  <text class="file2" x="46" y="408">core/cma_store.py  set_value() / effective() / reset()</text>
+
+  <!-- tab 2 -->
+  <rect class="box" x="30" y="426" width="440" height="126"/>
+  <text class="name" x="46" y="446">Tab 2 — Correlation matrix</text>
+  <text class="file" x="456" y="446" text-anchor="end">_correlation_tab()</text>
+  <g>
+    <rect x="46"  y="458" width="16" height="16" fill="#7A1F2B"/>
+    <rect x="64"  y="458" width="16" height="16" fill="#A34A54"/>
+    <rect x="82"  y="458" width="16" height="16" fill="#D9B9BC"/>
+    <rect x="100" y="458" width="16" height="16" fill="#F1ECE8"/>
+    <rect x="118" y="458" width="16" height="16" fill="#8E8A8C"/>
+    <rect x="46"  y="476" width="16" height="16" fill="#A34A54"/>
+    <rect x="64"  y="476" width="16" height="16" fill="#7A1F2B"/>
+    <rect x="82"  y="476" width="16" height="16" fill="#C48F95"/>
+    <rect x="100" y="476" width="16" height="16" fill="#E5DFDC"/>
+    <rect x="118" y="476" width="16" height="16" fill="#6E6A6B"/>
+    <rect x="46"  y="494" width="16" height="16" fill="#D9B9BC"/>
+    <rect x="64"  y="494" width="16" height="16" fill="#C48F95"/>
+    <rect x="82"  y="494" width="16" height="16" fill="#7A1F2B"/>
+    <rect x="100" y="494" width="16" height="16" fill="#F1ECE8"/>
+    <rect x="118" y="494" width="16" height="16" fill="#3C3739"/>
+  </g>
+  <text class="tiny" x="148" y="468">maroon = +1   cream = 0   black = −1</text>
+  <text class="tiny" x="148" y="484">Read-only in this version.</text>
+  <text class="tiny" x="148" y="500">Used in full for √(wᵀΣw).</text>
+  <text class="file2" x="148" y="520">ui/charts.py  correlation_heatmap()</text>
+  <text class="tiny" x="46" y="540">To make it editable you would need a matrix-aware override in core/cma_store.py.</text>
+
+  <!-- tab 3 -->
+  <rect class="box" x="490" y="426" width="440" height="126"/>
+  <text class="name" x="506" y="446">Tab 3 — Change log</text>
+  <text class="file" x="916" y="446" text-anchor="end">_change_log_tab()</text>
+  <rect x="506" y="458" width="404" height="16" fill="#F6F3F2" stroke="#E4E4E4"/>
+  <text x="514" y="470" font-size="8.5" fill="#453C3F">When            User      Ccy   Code   Field              Old    New</text>
+  <rect x="506" y="474" width="404" height="15" fill="#FFFFFF" stroke="#EDEDED"/>
+  <text x="514" y="485" font-size="8.5" fill="#1A1719">2026-09-06 15:24   ARIJIT   USD   EME    expected_return    8.20   10.50</text>
+  <text class="tiny" x="506" y="506">Only this session’s edits. Clearing the session clears the log.</text>
+  <text class="tiny" x="506" y="522">Downloadable as CSV if you want a record before you close the tab.</text>
+  <text class="file2" x="506" y="542">core/cma_store.py  audit_df()</text>
+
+  <!-- why nothing saved -->
+  <rect class="boxhi" x="30" y="566" width="900" height="98"/>
+  <text class="name" x="46" y="588">Why nothing is ever saved</text>
+  <text class="tiny" x="46" y="608">The CMA page is a PERSONAL SCRATCHPAD. If edits were written to disk, one analyst trying a scenario would silently change every</text>
+  <text class="tiny" x="46" y="623">other user’s numbers. So overrides live in st.session_state: private to one browser session, gone when it ends, and every new session</text>
+  <text class="tiny" x="46" y="638">starts from data/cma/*.csv again.</text>
+  <text class="tiny" x="46" y="656">TO CHANGE THE REAL ASSUMPTIONS FOR EVERYONE: edit data/cma/cma_&lt;CCY&gt;.csv and press “↻ Reload data”.</text>
+</svg>

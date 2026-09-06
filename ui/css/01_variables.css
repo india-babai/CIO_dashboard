@@ -1,0 +1,41 @@
+/* ===========================================================================
+   01 — VARIABLES.  ***THE ONLY PLACE COLOURS AND FONTS ARE DEFINED.***
+   ===========================================================================
+
+   Change a value here and it changes EVERYWHERE — the CSS uses these via
+   var(--name), and ui/theme.py reads this very file at start-up so the Plotly
+   charts pick up exactly the same colours. You never have to edit a colour
+   in two places.
+
+   TO RE-THEME THE WHOLE APP: change --accent, --accent-soft, --accent-wash
+   and --black below. Nothing else needs touching.
+
+   (Per-asset-class colours are NOT here — those live in settings.toml under
+   [[subgroups]] and [[groups]], because they belong with the taxonomy.)
+   =========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap');
+
+:root {
+  /* ---- brand ------------------------------------------------------- */
+  --accent: #7A1F2B;        /* maroon — headings, selected controls, frontier curve */
+  --accent-soft: #A33847;   /* lighter maroon — button hover */
+  --accent-wash: #F4E6E8;   /* very pale maroon — selected chip background */
+  --black: #17161A;         /* table header bars, section rules */
+
+  /* ---- text -------------------------------------------------------- */
+  --ink: #1A1719;           /* main text (near-black) */
+  --ink-soft: #453C3F;      /* secondary text */
+  --mute: #7A6E71;          /* labels, captions, muted numbers */
+
+  /* ---- surfaces & lines -------------------------------------------- */
+  --bg: #FFFFFF;            /* page background */
+  --card: #FFFFFF;          /* card / table background */
+  --line: #E4E4E4;          /* borders */
+  --line-soft: #EDEDED;     /* very light row separators */
+  --zebra: #E9E9EA;         /* alternating table row shading */
+
+  /* ---- fonts ------------------------------------------------------- */
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+}

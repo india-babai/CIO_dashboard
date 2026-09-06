@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1120" viewBox="0 0 960 1120" font-family="Segoe UI, Inter, Helvetica, Arial, sans-serif">
+  <style>
+    .bg      { fill: #FFFFFF; }
+    .box     { fill: #FFFFFF; stroke: #D9D4D2; stroke-width: 1.2; rx: 6; }
+    .boxhi   { fill: #FCF7F8; stroke: #7A1F2B; stroke-width: 1.6; rx: 6; }
+    .inner   { fill: #F6F3F2; stroke: #E4E4E4; stroke-width: 1; rx: 4; }
+    .barmar  { fill: #7A1F2B; }
+    .barblk  { fill: #17161A; }
+    .zebra   { fill: #E9E9EA; }
+    .title   { font-size: 21px; font-weight: 700; fill: #17161A; }
+    .sub     { font-size: 12.5px; fill: #7A6E71; }
+    .step    { font-size: 12px; font-weight: 700; fill: #FFFFFF; }
+    .name    { font-size: 14px; font-weight: 600; fill: #1A1719; }
+    .desc    { font-size: 11.5px; fill: #7A6E71; }
+    .file    { font-size: 12px; font-weight: 600; fill: #7A1F2B;
+               font-family: Consolas, "Courier New", monospace; }
+    .file2   { font-size: 11px; fill: #8A8385;
+               font-family: Consolas, "Courier New", monospace; }
+    .tiny    { font-size: 10px; fill: #8A8385; }
+    .white   { font-size: 10.5px; font-weight: 600; fill: #FFFFFF; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="960" height="1120"/>
+
+  <!-- ================= header ================= -->
+  <text class="title" x="30" y="34">PAGE 1 — Portfolios  ·  what you see  →  the file that draws it</text>
+  <text class="sub"   x="30" y="55">Top to bottom, exactly as the page renders. Maroon monospace = the file to open.</text>
+  <line x1="30" y1="66" x2="930" y2="66" stroke="#E4E4E4" stroke-width="1"/>
+
+  <!-- ================= 1 top bar ================= -->
+  <rect class="box" x="30" y="80" width="900" height="46"/>
+  <text class="name" x="46"  y="100">CIO. Model Portfolios</text>
+  <text class="desc" x="46"  y="116">black title bar + the “10 models · 16 asset classes” counts on the right</text>
+  <text class="file" x="920" y="103" text-anchor="end">app.py  _render_top_bar()</text>
+
+  <!-- ================= 2 nav ================= -->
+  <rect class="box" x="30" y="134" width="900" height="42"/>
+  <rect x="46" y="146" width="180" height="20" rx="10" fill="#EDF0F1" stroke="#E4E4E4"/>
+  <rect x="49" y="149" width="84"  height="14" rx="7"  fill="#FFFFFF"/>
+  <text x="60"  y="160" font-size="9" fill="#7A1F2B" font-weight="600">Portfolios</text>
+  <text x="146" y="160" font-size="9" fill="#7A6E71">Capital Mkt…</text>
+  <text class="desc" x="240" y="161">page pills  ·  “↻ Reload data” re-reads the data/ folder</text>
+  <text class="file" x="920" y="161" text-anchor="end">app.py  _render_navigation()</text>
+
+  <!-- ================= 3 heading ================= -->
+  <rect class="box" x="30" y="184" width="900" height="50"/>
+  <text x="46" y="201" font-size="9" font-weight="700" fill="#7A1F2B" letter-spacing="1.4">MODEL PORTFOLIO</text>
+  <text x="46" y="219" font-size="15" fill="#1A1719" font-family="Georgia, serif">Strategic &amp; dynamic asset allocation</text>
+  <text class="file"  x="920" y="205" text-anchor="end">ui/widgets.py  section_heading()</text>
+  <text class="file2" x="920" y="222" text-anchor="end">wording: ui/page_portfolios.py</text>
+
+  <!-- ================= 4 dropdown ================= -->
+  <rect class="boxhi" x="30" y="242" width="900" height="44"/>
+  <rect class="inner" x="46" y="254" width="300" height="21"/>
+  <text x="56" y="269" font-size="11" fill="#1A1719">EUR EMEA</text>
+  <text x="336" y="269" font-size="11" fill="#7A6E71">▾</text>
+  <text class="desc" x="360" y="262">THE ONLY control that changes everything below.</text>
+  <text class="desc" x="360" y="276">The model carries its own currency → picks the CMA automatically.</text>
+  <text class="file" x="920" y="269" text-anchor="end">ui/page_portfolios.py  _choose_model()</text>
+
+  <!-- ================= 5 summary bar ================= -->
+  <rect class="box" x="30" y="294" width="900" height="44"/>
+  <text class="desc" x="46" y="311">EUR EMEA · valued in EUR · scenarios: ESAA / DSAA 2026 / DSAA 2025 · Change = …</text>
+  <rect x="46" y="318" width="9" height="9" rx="2" fill="#FFFFFF" stroke="#7A6E71"/>
+  <text class="desc" x="62" y="327">Show DSAA 2025 &amp; Change   (adds 2 columns to the table below)</text>
+  <rect class="inner" x="380" y="316" width="86" height="16"/>
+  <text x="392" y="328" font-size="9.5" fill="#453C3F">↺ Reset edits</text>
+  <text class="file" x="920" y="318" text-anchor="end">ui/page_portfolios.py</text>
+  <text class="file2" x="920" y="333" text-anchor="end">_model_summary_bar()</text>
+
+  <!-- ================= 6 house table ================= -->
+  <rect class="boxhi" x="30" y="346" width="900" height="196"/>
+  <text class="name" x="46" y="366">The house table  —  RP1 … RP5 side by side</text>
+  <text class="file" x="920" y="366" text-anchor="end">ui/sections/house_table.py</text>
+  <text class="file2" x="920" y="381" text-anchor="end">styling: ui/css/05_house_table.css</text>
+  <text class="file2" x="920" y="395" text-anchor="end">numbers: core/report_tables.py</text>
+
+  <!-- mini table mock -->
+  <rect class="barblk" x="46"  y="386" width="104" height="30"/>
+  <text class="white"  x="54"  y="405">ASSET CLASS</text>
+  <rect class="barmar" x="154" y="386" width="120" height="15"/>
+  <text class="white"  x="204" y="397" text-anchor="middle">RP1</text>
+  <rect class="barblk" x="154" y="401" width="120" height="15"/>
+  <text class="white"  x="166" y="412">ESAA   DSAA 2026</text>
+  <rect x="274" y="386" width="12" height="30" fill="#FFFFFF"/>
+  <rect class="barmar" x="286" y="386" width="120" height="15"/>
+  <text class="white"  x="336" y="397" text-anchor="middle">RP2</text>
+  <rect class="barblk" x="286" y="401" width="120" height="15"/>
+  <text class="white"  x="298" y="412">ESAA   DSAA 2026</text>
+  <rect x="406" y="386" width="12" height="30" fill="#FFFFFF"/>
+  <rect class="barmar" x="418" y="386" width="120" height="15"/>
+  <text class="white"  x="478" y="397" text-anchor="middle">RP3 …</text>
+  <rect class="barblk" x="418" y="401" width="120" height="15"/>
+  <text class="white"  x="430" y="412">ESAA   DSAA 2026</text>
+
+  <rect x="46" y="416" width="492" height="13" fill="#FFFFFF"/>
+  <text x="54" y="426" font-size="9.5" fill="#1A1719">EME</text>
+  <rect class="zebra" x="46" y="429" width="492" height="13"/>
+  <text x="54" y="439" font-size="9.5" fill="#1A1719">DME</text>
+  <rect x="46" y="442" width="492" height="13" fill="#FFFFFF"/>
+  <text x="54" y="452" font-size="9.5" fill="#1A1719">Gov  … 16 asset codes</text>
+  <line x1="46" y1="462" x2="538" y2="462" stroke="#17161A" stroke-width="2.5"/>
+  <text x="54" y="476" font-size="9.5" fill="#1A1719">Equity · Risky FI · Defensive FI …  6 sub-groups</text>
+  <line x1="46" y1="482" x2="538" y2="482" stroke="#17161A" stroke-width="2.5"/>
+  <text x="54" y="496" font-size="9.5" fill="#1A1719">Equity · Fixed Income · Alternatives · Cash</text>
+  <line x1="46" y1="502" x2="538" y2="502" stroke="#17161A" stroke-width="2.5"/>
+  <text x="54" y="515" font-size="9" font-weight="700" fill="#1A1719" letter-spacing="0.8">RISK-RETURN METRICS</text>
+  <text x="54" y="530" font-size="9.5" fill="#1A1719">Exp Ret · Exp Vol · Exp Sharpe · Tracking Error</text>
+
+  <text class="tiny" x="556" y="428">4 stacked blocks, separated by black rules.</text>
+  <text class="tiny" x="556" y="444">Hand-written HTML, not st.dataframe —</text>
+  <text class="tiny" x="556" y="460">Streamlit draws tables on a canvas, which</text>
+  <text class="tiny" x="556" y="476">cannot do zebra rows, merged RP headers</text>
+  <text class="tiny" x="556" y="492">or the white gutter columns.</text>
+  <text class="tiny" x="556" y="515">White gaps between RPs are real empty</text>
+  <text class="tiny" x="556" y="531">&lt;td class="gut"&gt; cells, not padding.</text>
+
+  <!-- ================= 7 excel ================= -->
+  <rect class="box" x="30" y="550" width="900" height="40"/>
+  <rect class="inner" x="46" y="561" width="200" height="19"/>
+  <text x="58" y="574" font-size="10" fill="#453C3F">⬇  Download (Excel — one sheet per RP)</text>
+  <text class="desc" x="262" y="574">same four blocks, one worksheet per risk profile</text>
+  <text class="file" x="920" y="574" text-anchor="end">core/excel_export.py</text>
+
+  <!-- ================= 8 what-if ================= -->
+  <rect class="boxhi" x="30" y="598" width="900" height="150"/>
+  <text x="46" y="617" font-size="9" font-weight="700" fill="#7A6E71" letter-spacing="1.2">WHAT-IF — ADJUST INDIVIDUAL WEIGHTS</text>
+  <text class="file"  x="920" y="617" text-anchor="end">ui/sections/whatif_editor.py</text>
+  <text class="file2" x="920" y="632" text-anchor="end">session state: ui/weight_edits.py</text>
+
+  <rect class="inner" x="46" y="626" width="34" height="15"/>
+  <text x="55" y="637" font-size="9" fill="#7A1F2B">RP1</text>
+  <rect class="inner" x="84" y="626" width="34" height="15"/>
+  <text x="93" y="637" font-size="9" fill="#7A6E71">RP2</text>
+  <rect class="inner" x="122" y="626" width="34" height="15"/>
+  <text x="131" y="637" font-size="9" fill="#7A6E71">RP3 …</text>
+
+  <rect class="box" x="46" y="648" width="230" height="88"/>
+  <text x="58" y="664" font-size="9.5" font-weight="600" fill="#1A1719">editable weight grid</text>
+  <text class="tiny" x="58" y="678">16 rows × ESAA / DSAA 2026</text>
+  <line x1="58" y1="686" x2="264" y2="686" stroke="#E4E4E4"/>
+  <text x="58" y="701" font-size="9.5" font-weight="600" fill="#1A1719">Risk-Return Metrics</text>
+  <text class="tiny" x="58" y="714">recomputes as you type</text>
+  <text class="tiny" x="58" y="728">(compact, not page-wide)</text>
+
+  <rect class="box" x="288" y="648" width="250" height="88"/>
+  <text x="300" y="664" font-size="9.5" font-weight="600" fill="#1A1719">DSAA 2026 vs ESAA — active weights</text>
+  <rect x="300" y="674" width="60" height="7" fill="#7A1F2B"/>
+  <rect x="300" y="684" width="34" height="7" fill="#7A1F2B"/>
+  <rect x="252" y="694" width="48" height="7" fill="#8A8385"/>
+  <rect x="272" y="704" width="28" height="7" fill="#8A8385"/>
+  <rect x="300" y="714" width="44" height="7" fill="#7A1F2B"/>
+  <line x1="300" y1="670" x2="300" y2="725" stroke="#B4ACAA" stroke-width="1"/>
+  <text class="tiny" x="368" y="700">ui/charts.py</text>
+  <text class="tiny" x="368" y="713">active_weights_bar()</text>
+
+  <text class="tiny" x="556" y="670">Type a number here and the house table ABOVE,</text>
+  <text class="tiny" x="556" y="686">the charts and the frontier all update in the same</text>
+  <text class="tiny" x="556" y="702">page load. That is what fold_in_pending_edits()</text>
+  <text class="tiny" x="556" y="718">in ui/weight_edits.py exists to do — read the long</text>
+  <text class="tiny" x="556" y="734">comment at the top of that file.</text>
+
+  <!-- ================= 9 charts ================= -->
+  <rect class="box" x="30" y="756" width="900" height="112"/>
+  <text x="46" y="775" font-size="9" font-weight="700" fill="#7A1F2B" letter-spacing="1.2">ALLOCATION &amp; RISK</text>
+  <text x="46" y="792" font-size="14" fill="#1A1719" font-family="Georgia, serif">Charts</text>
+  <text class="file"  x="920" y="775" text-anchor="end">ui/sections/charts_section.py</text>
+  <text class="file2" x="920" y="790" text-anchor="end">figures: ui/charts.py</text>
+
+  <rect class="inner" x="46" y="800" width="120" height="14"/>
+  <text x="54" y="811" font-size="8.5" fill="#7A6E71">RP1..RP5</text>
+  <rect class="inner" x="174" y="800" width="150" height="14"/>
+  <text x="182" y="811" font-size="8.5" fill="#7A6E71">ESAA | DSAA 2026 | 2025</text>
+  <rect class="inner" x="332" y="800" width="170" height="14"/>
+  <text x="340" y="811" font-size="8.5" fill="#7A6E71">Granular | Sub-group | Group</text>
+
+  <circle cx="120" cy="845" r="19" fill="none" stroke="#7A1F2B" stroke-width="9"/>
+  <text class="tiny" x="152" y="843">allocation donut</text>
+  <text class="tiny" x="152" y="856">allocation_donut()</text>
+  <rect x="300" y="830" width="70" height="6" fill="#D8D2CE"/>
+  <rect x="300" y="839" width="54" height="6" fill="#7A1F2B"/>
+  <rect x="300" y="848" width="86" height="6" fill="#3C3739"/>
+  <text class="tiny" x="400" y="843">weight vs return vs risk</text>
+  <text class="tiny" x="400" y="856">contribution_bar()</text>
+
+  <!-- ================= 10 frontier ================= -->
+  <rect class="box" x="30" y="876" width="900" height="132"/>
+  <text x="46" y="895" font-size="9" font-weight="700" fill="#7A1F2B" letter-spacing="1.2">OPTIMISATION</text>
+  <text x="46" y="912" font-size="14" fill="#1A1719" font-family="Georgia, serif">This model vs the efficient frontier</text>
+  <text class="file"  x="920" y="895" text-anchor="end">ui/sections/frontier_section.py</text>
+  <text class="file2" x="920" y="910" text-anchor="end">maths: core/frontier.py  (needs SciPy)</text>
+
+  <path d="M 60 985 Q 150 930 330 918" fill="none" stroke="#7A1F2B" stroke-width="2.4"/>
+  <path d="M 78 988 L 120 972 L 165 960 L 215 950 L 262 944" fill="none" stroke="#2E7D9E" stroke-width="1.4" stroke-dasharray="3 3"/>
+  <circle cx="78" cy="988" r="3" fill="#2E7D9E"/><circle cx="120" cy="972" r="3" fill="#2E7D9E"/>
+  <circle cx="165" cy="960" r="3" fill="#2E7D9E"/><circle cx="215" cy="950" r="3" fill="#2E7D9E"/>
+  <circle cx="262" cy="944" r="3" fill="#2E7D9E"/>
+  <path d="M 84 984 L 128 966 L 174 953 L 224 942 L 272 935" fill="none" stroke="#B8862B" stroke-width="1.4" stroke-dasharray="3 3"/>
+  <circle cx="96" cy="996" r="2.4" fill="#17161A"/><circle cx="140" cy="1000" r="2.4" fill="#17161A"/>
+  <circle cx="205" cy="978" r="2.4" fill="#17161A"/><circle cx="290" cy="962" r="2.4" fill="#17161A"/>
+  <text class="tiny" x="352" y="930">— maroon curve = the efficient frontier</text>
+  <text class="tiny" x="352" y="946">— one dotted line per scenario (RP1→RP5)</text>
+  <text class="tiny" x="352" y="962">— black dots = individual asset classes</text>
+  <text class="tiny" x="352" y="978">— click a legend entry to hide that series</text>
+  <text class="tiny" x="352" y="994">— table below gives the “return gap (pp)”</text>
+  <text class="tiny" x="620" y="946">Solving is cached (@st.cache_data) because it</text>
+  <text class="tiny" x="620" y="962">is ~120 optimisations. The cache key includes</text>
+  <text class="tiny" x="620" y="978">the CMA, so a user who edited the CMA gets</text>
+  <text class="tiny" x="620" y="994">their own frontier, never someone else’s.</text>
+
+  <!-- ================= footer ================= -->
+  <rect class="box" x="30" y="1016" width="900" height="34"/>
+  <text class="desc" x="46" y="1037">CIO Model Portfolio Dashboard · illustrative figures · CMA edits are per-session only</text>
+  <text class="file" x="920" y="1037" text-anchor="end">app.py  _render_footer()</text>
+
+  <text class="tiny" x="30" y="1078">Boxes outlined in maroon are the three places a user actually interacts with the data: the model dropdown, the house table, and the What-if editor.</text>
+  <text class="tiny" x="30" y="1096">Everything on this page reads the SAME session weights, which is why an edit in the What-if card changes the table, the charts and the frontier together.</text>
+</svg>

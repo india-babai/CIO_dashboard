@@ -1,0 +1,151 @@
+/* ===========================================================================
+   04 — WIDGETS.  Restyles Streamlit's built-in controls to the house look.
+   ===========================================================================
+
+   Streamlit gives its widgets generic styling; each block below overrides one
+   widget type. The selectors use data-testid / data-attribute names that
+   Streamlit sets. If an upgrade breaks one, inspect the element in the browser
+   and update the selector in that block only.
+
+   WIDGET -> BLOCK MAP
+     st.segmented_control  -> "segmented controls"   (also the top nav pills)
+     st.selectbox/input    -> "inputs"
+     st.multiselect        -> "multiselect chips"
+     st.button/download    -> "buttons"
+     st.metric             -> "metric tiles"
+     st.dataframe/editor   -> "dataframes"
+     st.tabs               -> "tabs"
+     the CMA-edited banner -> "session-edit banner"
+   =========================================================================== */
+
+/* ---- segmented controls --------------------------------------------- */
+[data-testid="stButtonGroup"] > label[data-testid="stWidgetLabel"] { display: none !important; }
+[data-testid="stButtonGroup"] [role="radiogroup"] {
+  display: inline-flex; gap: 0.3rem; flex-wrap: wrap;
+}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"] {
+  border: 1px solid var(--line) !important;
+  background: var(--card) !important;
+  color: var(--ink-soft) !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important; font-size: 0.83rem !important;
+  padding: 0.3rem 0.85rem !important;
+  transition: border-color .15s, color .15s, background .15s;
+}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"]:hover {
+  color: var(--ink) !important; border-color: #CBD5DA !important;
+}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"][data-selected="true"] {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background: var(--accent-wash) !important;
+}
+[data-testid="stButtonGroup"] button[data-variant="segmented_control"] * { color: inherit !important; }
+
+/* the TOP NAV only (app.py wraps it in st.container(key="cio-nav"), which
+   Streamlit turns into the class .st-key-cio-nav) — rounded pill treatment */
+.st-key-cio-nav [data-testid="stButtonGroup"] [role="radiogroup"] {
+  background: #EDF0F1; padding: 0.25rem; border-radius: 999px;
+  border: 1px solid var(--line); gap: 0.15rem;
+}
+.st-key-cio-nav [data-testid="stButtonGroup"] button[data-variant="segmented_control"] {
+  border: 1px solid transparent !important; border-radius: 999px !important;
+  padding: 0.34rem 1.05rem !important; background: transparent !important;
+}
+.st-key-cio-nav [data-testid="stButtonGroup"] button[data-variant="segmented_control"][data-selected="true"] {
+  background: var(--card) !important; color: var(--accent) !important;
+  border-color: transparent !important; box-shadow: 0 1px 2px rgba(31, 41, 51, .10);
+}
+
+/* small uppercase label you can place above a bare segmented control */
+.cio-mini-label {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--mute); font-weight: 600; margin-bottom: 0.35rem;
+}
+
+/* ---- inputs ---------------------------------------------------------- */
+[data-testid="stSelectbox"] label, [data-testid="stMultiSelect"] label,
+[data-testid="stNumberInput"] label, [data-testid="stToggle"] label p {
+  font-size: 0.72rem !important; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--mute) !important; font-weight: 600;
+}
+[data-baseweb="select"] > div, [data-baseweb="input"] > div {
+  border-radius: 9px !important; border-color: var(--line) !important;
+  background: var(--card) !important;
+}
+[data-baseweb="select"] > div:focus-within { border-color: var(--accent) !important; }
+
+/* ---- multiselect chips ---------------------------------------------- */
+[data-testid="stMultiSelectTagsContainer"] [data-tag],
+[data-baseweb="tag"] {
+  background-color: var(--accent-wash) !important;
+  color: var(--accent) !important;
+  border: 1px solid var(--accent) !important;
+  border-radius: 6px !important;
+}
+[data-testid="stMultiSelectTagsContainer"] [data-tag] *,
+[data-baseweb="tag"] span, [data-baseweb="tag"] svg {
+  color: var(--accent) !important; fill: var(--accent) !important;
+}
+
+/* ---- buttons --------------------------------------------------------- */
+.stButton > button, .stDownloadButton > button {
+  border-radius: 9px; border: 1px solid var(--line); background: var(--card);
+  color: var(--ink-soft); font-weight: 500; font-size: 0.84rem; padding: 0.35rem 0.9rem;
+  transition: border-color .15s, color .15s;
+}
+.stButton > button:hover, .stDownloadButton > button:hover {
+  border-color: var(--accent); color: var(--accent);
+}
+.stButton > button[kind="primary"] {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+.stButton > button[kind="primary"]:hover { background: var(--accent-soft); color: #fff; }
+
+/* ---- metric tiles ---------------------------------------------------- */
+[data-testid="stMetric"] {
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 0.8rem 0.95rem;
+}
+[data-testid="stMetricLabel"] p {
+  font-size: 0.7rem !important; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--mute) !important; font-weight: 600; white-space: nowrap;
+}
+[data-testid="stMetricValue"] {
+  font-family: var(--serif); font-weight: 500;
+  font-variant-numeric: tabular-nums; color: var(--ink); font-size: 1.7rem;
+}
+[data-testid="stMetricDelta"] { font-size: 0.78rem; font-weight: 500; }
+
+/* ---- dataframes & data editors -------------------------------------- */
+[data-testid="stDataFrame"] { border-radius: 10px; border: 1px solid var(--line); }
+[data-testid="stDataFrame"] * { font-variant-numeric: tabular-nums; }
+[data-testid="stDataFrameResizable"] { border-radius: 10px; }
+
+/* ---- tabs (used on the CMA page) ------------------------------------ */
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+  gap: 1.4rem; border-bottom: 1px solid var(--line);
+}
+[data-testid="stTabs"] [data-baseweb="tab"] {
+  font-size: 0.88rem; font-weight: 500; color: var(--mute);
+}
+[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] { color: var(--accent) !important; }
+[data-testid="stTabs"] [data-baseweb="tab-highlight"] { background-color: var(--accent) !important; }
+[data-testid="stTabs"] [data-baseweb="tab"] p { font-weight: 500; }
+
+/* ---- session-edit banner (app.py, shown when the CMA is edited) ------ */
+.cio-banner {
+  display: flex; align-items: center; gap: 0.6rem;
+  background: #FFF8EC; border: 1px solid #F0DBB0; color: #7A5B1E;
+  border-radius: 10px; padding: 0.6rem 0.9rem; font-size: 0.84rem; font-weight: 500;
+}
+.cio-banner .badge {
+  background: #E8A33D; color: #fff; border-radius: 6px; padding: 0.05rem 0.4rem;
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;
+}
+
+/* small inline pill, e.g. a coverage warning */
+.cio-chip {
+  display: inline-block; background: var(--accent-wash); color: var(--accent);
+  border-radius: 6px; padding: 0.1rem 0.5rem; font-size: 0.75rem; font-weight: 600;
+}

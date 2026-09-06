@@ -1,0 +1,33 @@
+/* ===========================================================================
+   02 — STREAMLIT RESET.  Hides Streamlit's own chrome.
+   ===========================================================================
+
+   This is what stops the app looking like a stock Streamlit app: no hamburger
+   menu, no "Deploy" toolbar, no coloured loading bar, no sidebar.
+
+   IF SOMETHING STREAMLIT-ISH REAPPEARS AFTER AN UPGRADE:
+   Streamlit renames its internal data-testid attributes occasionally. Open the
+   app in a browser, right-click the unwanted element -> Inspect, copy its
+   data-testid, and add it to the matching list below.
+   =========================================================================== */
+
+/* top-right menu, header bar, toolbar, running indicator, footer */
+#MainMenu,
+header[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+footer { display: none !important; }
+
+/* the whole sidebar and its collapse arrow */
+[data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapseButton"] { display: none !important; }
+
+/* our own background instead of Streamlit's */
+[data-testid="stAppViewContainer"] > .main,
+[data-testid="stAppViewContainer"],
+[data-testid="stApp"] { background: var(--bg); }
+
+html, body, [class*="css"] { font-family: var(--sans); color: var(--ink); }

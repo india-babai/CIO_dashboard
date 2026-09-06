@@ -1,0 +1,235 @@
+# =============================================================================
+# CIO Model Portfolio Dashboard - configuration
+# Everything the dashboard needs that is NOT portfolio / CMA data itself.
+# Add asset classes, rename groups, relabel scenarios here - no code changes.
+# =============================================================================
+
+# CMA currencies that have files in [data].cma_dir (cma_<CCY>.csv + corr_<CCY>.csv).
+# There is no currency picker in the UI - each model row carries its own currency
+# and the matching CMA is used automatically. Keep this before any [table].
+currencies = ["USD", "SGD", "EUR", "GBP"]
+
+[app]
+# Browser tab title and the small grey line next to the logo.
+title    = "CIO Model Portfolios"
+subtitle = "Strategic & Tactical Asset Allocation"
+# NOTE: colours are NOT set here. Every colour in the app (CSS *and* charts)
+# comes from  ui/css/01_variables.css  — that is the single source of truth.
+# The only colours in this file are the per-group ones in [[subgroups]] and
+# [[groups]] further down, because those belong with the taxonomy.
+
+[data]
+model_portfolios = "data/model_portfolios.xlsx"
+cma_dir          = "data/cma"                      # cma_<CCY>.csv + corr_<CCY>.csv
+# CMA edits are per-session only (kept in st.session_state) and never written to disk.
+
+# ----------------------------------------------------------------------------
+# Scenario (weight) columns shown in the landing table.
+#   columns   : the weight sets held per (model, risk profile, asset class);
+#               these are the editable columns in the granular block.
+#   change    : the "Change" column = change[0] - change[1]
+#   benchmark : Tracking Error in the metrics block is measured against this
+# ----------------------------------------------------------------------------
+[scenarios]
+columns   = ["ESAA", "DSAA 2026", "DSAA 2025"]
+change    = ["DSAA 2026", "DSAA 2025"]
+benchmark = "ESAA"
+
+# ----------------------------------------------------------------------------
+# Risk / return metrics block
+#   risk_free : blank -> use the lowest-volatility asset's expected return
+# ----------------------------------------------------------------------------
+[metrics]
+risk_free = ""
+
+# ----------------------------------------------------------------------------
+# Efficient frontier (Optimisation section)
+# ----------------------------------------------------------------------------
+[frontier]
+points    = 120
+risk_free = ""
+
+# ----------------------------------------------------------------------------
+# Validation tolerances
+# ----------------------------------------------------------------------------
+[validation]
+weight_sum_tolerance   = 0.5
+allow_negative_weights = false
+
+# ----------------------------------------------------------------------------
+# Risk profiles - id must match the values in the model_portfolios file
+# ----------------------------------------------------------------------------
+[[risk_profiles]]
+id = 1
+label = "RP1 - Conservative"
+short = "RP1"
+
+[[risk_profiles]]
+id = 2
+label = "RP2 - Moderately Conservative"
+short = "RP2"
+
+[[risk_profiles]]
+id = 3
+label = "RP3 - Balanced"
+short = "RP3"
+
+[[risk_profiles]]
+id = 4
+label = "RP4 - Growth"
+short = "RP4"
+
+[[risk_profiles]]
+id = 5
+label = "RP5 - Aggressive"
+short = "RP5"
+
+# ----------------------------------------------------------------------------
+# Level 2 (sub-group) summary rows - order + colour
+# ----------------------------------------------------------------------------
+[[subgroups]]
+name = "Equity"
+color = "#7A1F2B"
+
+[[subgroups]]
+name = "Risky FI"
+color = "#A33847"
+
+[[subgroups]]
+name = "Defensive FI"
+color = "#C98A94"
+
+[[subgroups]]
+name = "liquid alts"
+color = "#5B5457"
+
+[[subgroups]]
+name = "illiq alts"
+color = "#8A8385"
+
+[[subgroups]]
+name = "Cash"
+color = "#BEB6B2"
+
+# ----------------------------------------------------------------------------
+# Level 1 (group) summary rows - order + colour
+# ----------------------------------------------------------------------------
+[[groups]]
+name = "Equity"
+color = "#7A1F2B"
+
+[[groups]]
+name = "Fixed Income"
+color = "#A33847"
+
+[[groups]]
+name = "Alternatives"
+color = "#5B5457"
+
+[[groups]]
+name = "Cash"
+color = "#BEB6B2"
+
+# ----------------------------------------------------------------------------
+# Granular asset classes.
+#   code     : short code shown in the table (must match the data files)
+#   name     : full name (tooltips / charts)
+#   subgroup : one of [[subgroups]].name
+#   group    : one of [[groups]].name
+# Order here controls row order in the granular block.
+# ----------------------------------------------------------------------------
+[[asset_classes]]
+code = "EME"
+name = "Emerging Markets Equity"
+subgroup = "Equity"
+group = "Equity"
+
+[[asset_classes]]
+code = "DME"
+name = "Developed Markets Equity"
+subgroup = "Equity"
+group = "Equity"
+
+[[asset_classes]]
+code = "Gov"
+name = "Government Bonds"
+subgroup = "Defensive FI"
+group = "Fixed Income"
+
+[[asset_classes]]
+code = "Infl"
+name = "Inflation-Linked Bonds"
+subgroup = "Defensive FI"
+group = "Fixed Income"
+
+[[asset_classes]]
+code = "EMD_L"
+name = "EM Debt - Local Currency"
+subgroup = "Risky FI"
+group = "Fixed Income"
+
+[[asset_classes]]
+code = "EMD_H"
+name = "EM Debt - Hard Currency"
+subgroup = "Risky FI"
+group = "Fixed Income"
+
+[[asset_classes]]
+code = "EMD_C"
+name = "EM Debt - Corporate"
+subgroup = "Risky FI"
+group = "Fixed Income"
+
+[[asset_classes]]
+code = "IG"
+name = "Investment Grade Credit"
+subgroup = "Risky FI"
+group = "Fixed Income"
+
+[[asset_classes]]
+code = "HYD"
+name = "High Yield Debt"
+subgroup = "Risky FI"
+group = "Fixed Income"
+
+[[asset_classes]]
+code = "SIG"
+name = "Securitised / Structured Credit"
+subgroup = "Risky FI"
+group = "Fixed Income"
+
+[[asset_classes]]
+code = "PD"
+name = "Private Debt"
+subgroup = "illiq alts"
+group = "Alternatives"
+
+[[asset_classes]]
+code = "Com"
+name = "Commodities"
+subgroup = "liquid alts"
+group = "Alternatives"
+
+[[asset_classes]]
+code = "RE"
+name = "Real Estate"
+subgroup = "illiq alts"
+group = "Alternatives"
+
+[[asset_classes]]
+code = "PE"
+name = "Private Equity"
+subgroup = "illiq alts"
+group = "Alternatives"
+
+[[asset_classes]]
+code = "HF"
+name = "Hedge Funds"
+subgroup = "liquid alts"
+group = "Alternatives"
+
+[[asset_classes]]
+code = "Cash"
+name = "Cash"
+subgroup = "Cash"
+group = "Cash"

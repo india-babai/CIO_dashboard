@@ -1,0 +1,17 @@
+code,expected_return,volatility
+EME,8.2,21.0
+DME,7.1,16.0
+Gov,4.0,5.0
+Infl,3.9,6.0
+EMD_L,6.8,12.0
+EMD_H,6.4,9.0
+EMD_C,6.2,8.5
+IG,4.9,6.0
+HYD,6.3,10.0
+SIG,5.2,5.5
+PD,8.0,11.0
+Com,4.6,15.0
+RE,6.6,14.0
+PE,10.5,24.0
+HF,5.2,7.0
+Cash,3.3,0.6
