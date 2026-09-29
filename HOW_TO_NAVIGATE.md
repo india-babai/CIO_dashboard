@@ -19,7 +19,7 @@ want to make.
 7. [Reference: `settings.toml`](#7-reference-settingstoml)
 8. [Reference: the data files](#8-reference-the-data-files)
 9. [How data flows through the app](#9-how-data-flows-through-the-app)
-10. [Five things that will surprise you](#10-five-things-that-will-surprise-you)
+10. [Six things that will surprise you](#10-six-things-that-will-surprise-you)
 11. [Troubleshooting](#11-troubleshooting)
 12. [Glossary](#12-glossary)
 
@@ -27,7 +27,9 @@ want to make.
 
 ## 1. What this app is — 60 seconds
 
-A two-page Streamlit dashboard for browsing CIO model portfolios.
+A three-page Streamlit dashboard for browsing CIO model portfolios. The pages
+are reached from the dark **left-hand sidebar**, which groups them into
+*Analysis* (things you look at) and *Inputs* (the control panel behind them).
 
 **Page 1 — Portfolios.** You pick one model portfolio from a dropdown. It shows
 that model's five risk profiles (RP1…RP5) **side by side** in the house table
@@ -36,9 +38,16 @@ totals, then four risk/return metrics. Below that you can edit any weight and
 watch everything recalculate, see charts, and see how far the model sits below
 the efficient frontier.
 
-**Page 2 — Capital Market Assumptions.** The expected return, volatility and
+**Page 2 — Backtesting.** Runs the same model portfolios through 20 years of
+daily price history, monthly rebalanced. Compare the three scenarios for one
+risk profile, or all five risk profiles for one scenario, or build your own
+portfolio and test it alongside. Growth, drawdown and rolling charts plus a
+full metrics table (CAGR, max drawdown, monthly VaR/CVaR, Sharpe, Sortino…).
+
+**Page 3 — Capital Market Assumptions.** The expected return, volatility and
 correlation numbers that every figure on page 1 is calculated from. You can
-edit them to try things — but only for your own browser session.
+edit them to try things — but only for your own browser session. This is an
+*Inputs* page — a control panel, not analysis.
 
 Three facts that explain most of the design:
 
@@ -80,7 +89,7 @@ Then open the URL it prints (usually <http://localhost:8501>).
 ```bash
 .venv/Scripts/python.exe scripts/smoke_test.py
 ```
-Checks all the data and maths without launching the app. ~30 seconds, 46
+Checks all the data and maths without launching the app. ~40 seconds, 66
 checks. **Run this after every change.** If it passes, your problem is in the
 `ui/` folder; if it fails, it's in `core/` or your data.
 
@@ -125,6 +134,9 @@ CIO_dashboard/
 │   ├── frontier.py           the efficient frontier optimiser (SciPy)
 │   ├── report_tables.py    ★ the four table blocks every display shares
 │   ├── excel_export.py       builds the .xlsx download
+│   ├── history_loader.py     reads data/history/prices_<CCY>.csv
+│   ├── backtest.py         ★ ALL the backtest maths: growth, drawdown,
+│   │                         VaR/CVaR, Sharpe, rolling windows
 │   └── cma_store.py          the imported CMA + this session's private edits
 │
 ├── ui/                     ═══ ALL STREAMLIT. NO MATHS. ═══
@@ -133,31 +145,40 @@ CIO_dashboard/
 │   ├── widgets.py            section_heading(), card_title(), …
 │   ├── charts.py           ★ every Plotly figure in the app
 │   ├── weight_edits.py     ★ the session copy of the weights you edit
+│   ├── sidebar_nav.py      ★ the dark left navigation; ADD A PAGE HERE
 │   ├── page_portfolios.py  ★ page 1 — reads like a table of contents
-│   ├── page_cma.py           page 2
+│   ├── page_backtest.py      page 2
+│   ├── page_cma.py           page 3
 │   │
-│   ├── sections/             one file per section of page 1
-│   │   ├── house_table.py      the big RP1–RP5 table
-│   │   ├── whatif_editor.py    editable weights + live metrics + tilt chart
-│   │   ├── charts_section.py   donut + contribution chart
-│   │   └── frontier_section.py efficient frontier
+│   ├── sections/             one file per section of a page
+│   │   ├── house_table.py        the big RP1–RP5 table
+│   │   ├── whatif_editor.py      editable weights + live metrics + tilt chart
+│   │   ├── charts_section.py     donut + contribution chart
+│   │   ├── frontier_section.py   efficient frontier
+│   │   ├── backtest_controls.py  what to compare, over what period
+│   │   ├── backtest_custom.py    build your own portfolio
+│   │   └── backtest_results.py   growth / drawdown / rolling + metrics table
 │   │
 │   └── css/                  the stylesheet, split by concern
 │       ├── 01_variables.css  ★ THE ONLY PLACE COLOURS ARE DEFINED
 │       ├── 02_streamlit_reset.css   hides Streamlit's own chrome
 │       ├── 03_layout_and_headings.css
 │       ├── 04_widgets.css
-│       └── 05_house_table.css       the big table
+│       ├── 05_house_table.css       the big table
+│       └── 06_sidebar.css           the dark left navigation
 │
 ├── data/                   ═══ YOUR DATA ═══
 │   ├── model_portfolios.xlsx
-│   └── cma/
-│       ├── cma_USD.csv     expected return + volatility
-│       └── corr_USD.csv    correlation matrix   (…and one pair per currency)
+│   ├── cma/
+│   │   ├── cma_USD.csv     expected return + volatility
+│   │   └── corr_USD.csv    correlation matrix   (…and one pair per currency)
+│   └── history/
+│       └── prices_USD.csv  20 years of daily index levels (one per currency)
 │
 ├── scripts/
 │   ├── smoke_test.py         run after every change
-│   └── generate_sample_data.py
+│   ├── generate_sample_data.py     (also calls the one below)
+│   └── generate_history_data.py
 │
 └── docs/
     ├── page-1-portfolios.svg  ★ annotated diagram: screen region → file
@@ -211,14 +232,30 @@ is labelled with the file that draws it. That is the fastest way to find code.
 
 The same information as text, top to bottom:
 
+### The sidebar (on every page)
+
+```
+┌──────────────────────┐
+│ CIO.                 │  ui/sidebar_nav.py  _render_brand()
+│ STRATEGIC & TACTICAL │
+├──────────────────────┤
+│ ANALYSIS             │  ui/sidebar_nav.py  NAV_GROUPS  ← ADD A PAGE HERE
+│   Portfolios         │  active item = st.button(type="primary"),
+│   Backtesting        │  painted maroon by ui/css/06_sidebar.css
+│                      │
+│ INPUTS               │
+│   Capital Market     │
+│   Assumptions        │
+├──────────────────────┤
+│ 10 model portfolios  │  ui/sidebar_nav.py  _render_meta()
+│ ↻ Reload data        │  clears the data caches in app.py
+└──────────────────────┘
+```
+
 ### Page 1 — Portfolios
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ CIO. Model Portfolios      10 models · 16 asset classes · 4 currencies│  app.py
-├──────────────────────────────────────────────────────────────────────┤     _render_top_bar()
-│ (Portfolios) (Capital Market Assumptions)            [↻ Reload data] │  app.py
-├──────────────────────────────────────────────────────────────────────┤     _render_navigation()
 │ MODEL PORTFOLIO                                                      │  ui/widgets.py
 │ Strategic & dynamic asset allocation                                 │     section_heading()
 ├──────────────────────────────────────────────────────────────────────┤
@@ -259,7 +296,40 @@ The same information as text, top to bottom:
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-### Page 2 — Capital Market Assumptions
+### Page 2 — Backtesting
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ BACKTESTING / Historical performance                                 │  ui/page_backtest.py
+│ [ EUR EMEA                                                    ▾ ]    │     render()
+│ EUR EMEA · priced in EUR · history Jun 2007–Sep 2026 · monthly       │
+├──────────────────────────────────────────────────────────────────────┤
+│ ⚠ No price history for X, Y — excluded and weights scaled up         │  ui/page_backtest.py
+├──────────────────────────────────────────────────────────────────────┤     (missing-data warning)
+│ WHAT TO COMPARE                                                      │  ui/sections/
+│ (Scenarios for one profile)(All risk profiles)(Custom only)          │    backtest_controls.py
+│ (RP1)(RP2)(RP3)(RP4)(RP5)        [x] Include my custom portfolio     │
+│ PERIOD  (1Y)(3Y)(5Y)(10Y)(20Y)(All)(Custom)                          │
+├──────────────────────────────────────────────────────────────────────┤
+│ BUILD YOUR OWN PORTFOLIO                                             │  ui/sections/
+│ [↺ Reset to RP3 DSAA 2026]            Total 100.0 ✓                  │    backtest_custom.py
+│ ┌──────────────┬────────┐                                            │
+│ │ Asset Class  │ Weight │  editable, 16 rows                         │
+├──────────────────────────────────────────────────────────────────────┤
+│ GROWTH OF 100 — LAST 10 YEARS                                        │  ui/sections/
+│ ( line per portfolio, all rebased to 100 )                           │    backtest_results.py
+├──────────────────────────────────────────────────────────────────────┤
+│ DRAWDOWN — HOW FAR BELOW THE PREVIOUS PEAK                           │  charts in
+│ ( underwater chart )   "Deepest fall: … lost 24.8% …"                │    ui/charts.py
+├──────────────────────────────────────────────────────────────────────┤
+│ ROLLING 12-MONTH RETURN    │   ROLLING 12-MONTH VOLATILITY           │
+├──────────────────────────────────────────────────────────────────────┤
+│ BACKTESTED METRICS                                                   │  maths in
+│ CAGR · vol · Sharpe · Sortino · max DD · Calmar · VaR · CVaR · …     │    core/backtest.py
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### Page 3 — Capital Market Assumptions
 
 ```
 [EDITED] CMA edited for this session only — …           app.py _render_session_banner()
@@ -293,6 +363,8 @@ need to touch unless stated otherwise.
 | Change the black rule thickness | `ui/css/05_house_table.css` | `tr.sep td { border-bottom }` |
 | Change a group's colour in charts | `settings.toml` | `[[subgroups]]` / `[[groups]]` → `color` |
 | Change chart line colours on the frontier | `ui/theme.py` | `SCENARIO_LINE` |
+| **Change the sidebar colour / width** | `ui/css/06_sidebar.css` | `[data-testid="stSidebar"] { width }`; the colour is `--black` in `01_variables.css` |
+| Change the active nav item's colour | `ui/css/01_variables.css` | `--accent` (the active item is `button[kind="primary"]`) |
 | Restyle a Streamlit control | `ui/css/04_widgets.css` | Each widget has its own labelled block |
 | A Streamlit element reappeared after upgrading | `ui/css/02_streamlit_reset.css` | Right-click it → Inspect → copy its `data-testid` → add it to the list |
 
@@ -335,6 +407,14 @@ All in **`settings.toml`**. Restart the app afterwards (see §10.2).
 | Cap any single asset on the frontier | Same `bounds`, e.g. `(0.0, 0.25)` for a 25% cap |
 | Make the frontier smoother / faster | `settings.toml` `[frontier].points` (120 now; fewer = faster, less accurate gaps) |
 | Loosen the "must sum to 100" check | `settings.toml` `[validation].weight_sum_tolerance` |
+| **Check or change any backtest formula** | `core/backtest.py` — the docstring lists them all |
+| **Change rebalancing** (monthly → quarterly) | `settings.toml` `[backtest].rebalance` — `"M"`, `"Q"`, `"Y"`, or blank for buy-and-hold |
+| Change the backtest risk-free rate | `settings.toml` `[backtest].risk_free` (annual %, used for Sharpe and Sortino) |
+| Change the VaR confidence level | `settings.toml` `[backtest].var_confidence` (0.95 → 95%) |
+| Change the rolling-chart window | `settings.toml` `[backtest].rolling_months` |
+| Change the default period shown | `settings.toml` `[backtest].default_years` |
+| **Add a backtest metric** | `core/backtest.py`: add the name to `METRIC_ROWS` **and** a line in `summary_metrics()`. It appears in the table automatically. |
+| Add a period preset (e.g. 15Y) | `ui/sections/backtest_controls.py` → `PERIOD_PRESETS` |
 
 ### 6.5 Structure and new features
 
@@ -344,7 +424,9 @@ All in **`settings.toml`**. Restart the app afterwards (see §10.2).
 | **Reorder the sections** | Move those `render(...)` lines around in `ui/page_portfolios.py`. |
 | **Remove a section** | Comment out its `render(...)` line. |
 | **Add a new chart** | Write a function in `ui/charts.py` that returns a Plotly figure ending in `return style(fig, height)`, then call it from a section with `st.plotly_chart(fig, config=PLOTLY_CONFIG)`. |
-| **Add a third page** | 1. Write `ui/page_mypage.py` with `render(cfg, data, store)`. 2. In `app.py`: add its name to `PAGES` and one `elif` branch in `main()`. |
+| **Add a new page** | 1. Write `ui/page_mypage.py` with `render(cfg, data, store)`. 2. Add `("My page", "mypage")` to `NAV_GROUPS` in `ui/sidebar_nav.py`. 3. Add one `elif` branch in `app.py` `main()`. |
+| Reorder / regroup the nav | `ui/sidebar_nav.py` → `NAV_GROUPS` |
+| Move a page between Analysis and Inputs | `ui/sidebar_nav.py` → `NAV_GROUPS` |
 | Change what the Excel download contains | `core/report_tables.py` → `stacked_block()` (layout) or `core/excel_export.py` (sheets) |
 | Change which columns the What-if editor exposes | `ui/sections/whatif_editor.py` → `columns` |
 
@@ -356,7 +438,9 @@ All in **`settings.toml`**. Restart the app afterwards (see §10.2).
 | Point at a different data folder | `settings.toml` `[data]` |
 | **Read from a database instead of files** | `core/data_loader.py` — replace the file reads, return the same `LoadResult` shape, and nothing else changes |
 | **Make CMA edits permanent and shared** | `core/cma_store.py` — write `self.overrides` to a JSON file in `_save_overrides()` and read it in `__init__`. ⚠ Then every user shares one CMA, which the current design deliberately avoids. |
-| Add a currency | Add it to `settings.toml` `currencies`, add `data/cma/cma_<CCY>.csv` + `corr_<CCY>.csv`, and use that code in the `currency` column of the Excel file |
+| Add a currency | Add it to `settings.toml` `currencies`, add `data/cma/cma_<CCY>.csv` + `corr_<CCY>.csv` **and** `data/history/prices_<CCY>.csv`, then use that code in the `currency` column of the Excel file |
+| **Put in real price history** | Replace `data/history/prices_<CCY>.csv` keeping the schema in §8. Press "↻ Reload data". |
+| An asset class has no price history | Nothing to do — the Backtesting page warns, excludes it, and scales the other weights up to 100%. Add the column when you have it. |
 | Set who appears in the change log | Set the `CIO_DASHBOARD_USER` environment variable, or edit `current_user()` in `core/cma_store.py` |
 | Change the browser tab title | `settings.toml` `[app].title` |
 
@@ -374,12 +458,18 @@ file** — see §10.2.
 | `[app].subtitle` | The small grey text next to the logo |
 | `[data].model_portfolios` | Path to the portfolio file (`.xlsx` or `.csv`) |
 | `[data].cma_dir` | Folder holding the CMA files |
+| `[data].history_dir` | Folder holding the daily price files |
 | `[scenarios].columns` | The weight column names, in display order. **Must match the Excel headers exactly.** |
 | `[scenarios].change` | `[newer, older]` — the Change column is `newer − older` |
 | `[scenarios].benchmark` | Tracking error is measured against this scenario |
 | `[metrics].risk_free` | Sharpe's risk-free rate. Blank = use the lowest-volatility asset. |
 | `[frontier].points` | How many points to solve along the frontier (120) |
 | `[frontier].risk_free` | Risk-free rate for the max-Sharpe marker |
+| `[backtest].rebalance` | `"M"` monthly, `"Q"` quarterly, `"Y"` yearly, blank = buy and hold |
+| `[backtest].risk_free` | Annual %, used for backtest Sharpe and Sortino |
+| `[backtest].var_confidence` | `0.95` → the table reports monthly VaR/CVaR at 95% |
+| `[backtest].rolling_months` | Window for the rolling return / volatility charts |
+| `[backtest].default_years` | How much history the Backtesting page shows on opening |
 | `[validation].weight_sum_tolerance` | How far from 100 a scenario may sum before you get a warning |
 | `[validation].allow_negative_weights` | `false` makes negative weights a fatal error |
 | `[[risk_profiles]]` | `id` (matches the Excel column), `label`, `short` |
@@ -423,6 +513,28 @@ Square correlation matrix. First column is `code`; the remaining column headers
 are the same codes. Should be positive semi-definite — the smoke test checks
 this and will tell you if it is not.
 
+### `data/history/prices_<CCY>.csv`  *(the Backtesting page)*
+
+Daily **total-return index levels** — not raw prices, not returns. One file per
+currency.
+
+```
+date,EME,DME,Gov,Infl,EMD_L,...        <- one column per asset code
+2007-06-07,100.0,100.0,100.0,...       <- levels, any starting value
+2007-06-08,100.62,100.21,99.98,...
+```
+
+| Rule | Why |
+|---|---|
+| `date` ascending, any pandas-readable format | it is parsed with `pd.to_datetime` |
+| Column names must equal `[[asset_classes]].code` | that is how weights are matched to prices |
+| **Total-return** levels (income reinvested) | otherwise bond and dividend returns are understated |
+| Blanks are fine | different markets have different holidays; they are forward-filled |
+| A missing **column** is fine | the page warns, excludes that asset, and scales the rest to 100% |
+
+20 years of daily data is about 5,000 rows and 750 KB per currency. The files
+are only read when you open the Backtesting page, and are cached after that.
+
 > **Units are the single most common mistake.** Everything is percent, never
 > fractions. If a number comes out 100× too big or small, this is why.
 
@@ -465,13 +577,32 @@ this and will tell you if it is not.
                          core/excel_export.py → the .xlsx download
 ```
 
+The Backtesting page is a separate, shorter chain — it needs prices, not the
+CMA:
+
+```
+  data/history/prices_<CCY>.csv
+              │
+              ▼
+  core/history_loader.py        reads + cleans; reports missing asset classes
+              │
+              ▼
+  ui/page_backtest.py           picks which weight vectors to test
+              │                 (scenarios / risk profiles / your custom one)
+              ▼
+  core/backtest.py              align_weights -> run -> metrics_frame
+              │
+              ▼
+  ui/sections/backtest_results.py   growth, drawdown, rolling, metrics table
+```
+
 The key thing: **the house table, the charts, the frontier and the Excel export
 all read the same session weights.** That is why editing one number updates
 everything at once.
 
 ---
 
-## 10. Five things that will surprise you
+## 10. Six things that will surprise you
 
 ### 10.1 The house table is hand-written HTML, not `st.dataframe`
 
@@ -522,7 +653,19 @@ other user's numbers.
 To change the assumptions *for everyone*, edit `data/cma/cma_<CCY>.csv` and
 press "↻ Reload data".
 
-### 10.5 Model portfolios sit *below* the efficient frontier — that is correct
+### 10.5 The backtest rebalances monthly, and that is a real assumption
+
+`core/backtest.py` resets the portfolio to its target weights at the start of
+every month; within the month the weights drift with the market. Change it in
+`settings.toml` `[backtest].rebalance`.
+
+This matters more than it looks. Buy-and-hold over 20 years lets equity grow
+into a much larger share, so a "balanced" portfolio quietly becomes an
+aggressive one and the drawdown numbers change substantially. If your real
+models rebalance quarterly, set `"Q"` before you compare the output to
+anything official.
+
+### 10.6 Model portfolios sit *below* the efficient frontier — that is correct
 
 The frontier assumes every asset class is directly investable at exactly its
 CMA, long-only, fully invested, with no other constraints. Real model
@@ -553,6 +696,12 @@ is wrong — the smoke test checks for exactly that.
 | Everything looks unstyled | A CSS file has a syntax error | Check the newest edit in `ui/css/`; one bad `{` kills the rest of that file |
 | Weights no longer sum to 100 warning in What-if | You edited a weight without offsetting another | Expected — it's a scratchpad. "↺ Reset edits" restores. |
 | Frontier is very slow | `[frontier].points` too high | Lower it, or check the `@st.cache_data` decorator is still on `_solve_frontier` |
+| Backtesting page says it needs price history | `data/history/` empty or wrong filename | Run `scripts/generate_history_data.py`, or add `prices_<CCY>.csv`. The error names the exact path it looked for. |
+| "No price history for X, Y" warning | Those asset codes have no column in the price file | Add the columns, or ignore it — they are excluded and the other weights scale to 100% |
+| Backtest returns look far too high/low | Price file is not total-return, or is in the wrong units | Levels must be an index (income reinvested), not raw prices and not returns. §8. |
+| Backtest CAGR disagrees with the CMA | Expected — CMA is forward-looking arithmetic, backtest is realised geometric | Geometric return is always below arithmetic by roughly ½σ² |
+| Two backtest lines sit on top of each other | ESAA and DSAA differ by only a point or two of weight | That *is* the finding. Click a legend entry to isolate one. |
+| Sidebar disappeared | A CSS edit re-hid it | Check `ui/css/02_streamlit_reset.css` does not list `stSidebar` |
 
 **When in doubt, run the smoke test.** It tells you which half of the codebase
 the problem is in.
@@ -577,6 +726,14 @@ the problem is in.
 | **Diversification ratio** | (weighted average vol) ÷ (portfolio vol). 1.0 = no diversification benefit |
 | **Effective number of bets** | How many genuinely independent risk positions the portfolio holds |
 | **pp** | Percentage points (a difference between two percentages) |
+| **CAGR** | Compound annual growth rate — the realised annualised return |
+| **Max drawdown** | Worst peak-to-trough fall over the period |
+| **VaR 95% (monthly)** | The monthly loss only 5% of months are worse than |
+| **CVaR 95%** | The *average* loss in that worst 5% of months. Always ≤ VaR. |
+| **Sortino** | Like Sharpe but only penalising downside volatility |
+| **Calmar** | CAGR ÷ |max drawdown| — return per unit of worst-case pain |
+| **Rebalancing** | Resetting drifted weights back to target. Monthly here. |
+| **Total-return index** | A price series with income reinvested |
 | **House format / house table** | The RP1–RP5 layout on the landing page |
 | `cfg` | The config object from `core/config.py` — appears in almost every function |
 | `data` / `LoadResult` | Everything read from `data/`, from `core/data_loader.py` |

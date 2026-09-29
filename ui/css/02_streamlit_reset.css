@@ -19,11 +19,8 @@ header[data-testid="stHeader"],
 [data-testid="stStatusWidget"],
 footer { display: none !important; }
 
-/* the whole sidebar and its collapse arrow */
-[data-testid="stSidebar"],
-[data-testid="stSidebarCollapsedControl"],
-[data-testid="collapsedControl"],
-[data-testid="stSidebarCollapseButton"] { display: none !important; }
+/* NOTE: the sidebar is NOT hidden any more - it is the app's navigation.
+   It is restyled in 06_sidebar.css. Only Streamlit's own chrome is removed. */
 
 /* our own background instead of Streamlit's */
 [data-testid="stAppViewContainer"] > .main,

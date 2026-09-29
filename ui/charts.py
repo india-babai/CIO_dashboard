@@ -30,8 +30,19 @@ from __future__ import annotations
 import pandas as pd
 import plotly.graph_objects as go
 
-from ui.theme import (ACCENT, ASSET_DOT, MUTE, NEGATIVE, POSITIVE, RISK_BAR,
-                      SCENARIO_LINE, WEIGHT_BAR, style)
+from ui.theme import (ACCENT, ASSET_DOT, CUSTOM_LINE, MUTE, NEGATIVE, POSITIVE,
+                      RISK_BAR, SCENARIO_LINE, SERIES_PALETTE, WEIGHT_BAR, style)
+
+
+def series_colour(name: str, position: int) -> str:
+    """
+    Pick a line colour for a backtest series. Anything whose name starts with
+    "Custom" is always black so the user's own portfolio stands out from the
+    model portfolios.
+    """
+    if name.lower().startswith("custom"):
+        return CUSTOM_LINE
+    return SERIES_PALETTE[position % len(SERIES_PALETTE)]
 
 
 # --------------------------------------------------------------------------- #
@@ -187,6 +198,94 @@ def frontier_scatter(frontier, points_by_scenario: dict[str, pd.DataFrame],
 
 # --------------------------------------------------------------------------- #
 # 5. correlation heatmap (CMA page)                                          #
+# --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# 6. backtest: growth of 100                                                 #
+# --------------------------------------------------------------------------- #
+def growth_chart(results: dict[str, pd.Series], height: int = 420) -> go.Figure:
+    """
+    Indexed growth of each backtested portfolio, all starting at 100.
+
+    results : {"ESAA": <index series>, "Custom portfolio": <index series>, ...}
+    """
+    fig = go.Figure()
+    for position, (name, series) in enumerate(results.items()):
+        if series.empty:
+            continue
+        fig.add_scatter(
+            x=series.index, y=series.values, mode="lines", name=name,
+            line=dict(color=series_colour(name, position), width=1.9),
+            hovertemplate=f"{name}<br>%{{x|%d %b %Y}}<br><b>%{{y:,.1f}}</b><extra></extra>",
+        )
+    fig.update_layout(
+        xaxis=dict(title=None, showgrid=False),
+        yaxis=dict(title="Growth of 100", showgrid=True),
+        legend=dict(orientation="h", y=-0.18, font=dict(size=11),
+                    itemclick="toggle", itemdoubleclick="toggleothers"),
+        margin=dict(l=6, r=10, t=6, b=4), hovermode="x unified",
+    )
+    return style(fig, height=height)
+
+
+# --------------------------------------------------------------------------- #
+# 7. backtest: drawdown (underwater)                                         #
+# --------------------------------------------------------------------------- #
+def drawdown_chart(drawdowns: dict[str, pd.Series], height: int = 260) -> go.Figure:
+    """
+    How far below its own running peak each portfolio is, through time.
+    Values are negative percentages; the first series is shaded.
+    """
+    fig = go.Figure()
+    for position, (name, series) in enumerate(drawdowns.items()):
+        if series.empty:
+            continue
+        colour = series_colour(name, position)
+        fig.add_scatter(
+            x=series.index, y=series.values, mode="lines", name=name,
+            line=dict(color=colour, width=1.5),
+            fill="tozeroy" if position == 0 else None,
+            fillcolor="rgba(122,31,43,0.12)" if position == 0 else None,
+            hovertemplate=f"{name}<br>%{{x|%d %b %Y}}<br><b>%{{y:.1f}}%</b><extra></extra>",
+        )
+    fig.update_layout(
+        xaxis=dict(title=None, showgrid=False),
+        yaxis=dict(title="Drawdown", ticksuffix="%", showgrid=True),
+        legend=dict(orientation="h", y=-0.24, font=dict(size=11)),
+        margin=dict(l=6, r=10, t=6, b=4), hovermode="x unified",
+    )
+    return style(fig, height=height)
+
+
+# --------------------------------------------------------------------------- #
+# 8. backtest: rolling return / rolling volatility                           #
+# --------------------------------------------------------------------------- #
+def rolling_chart(series_by_name: dict[str, pd.Series], y_title: str,
+                  height: int = 240, zero_line: bool = False) -> go.Figure:
+    """
+    Generic rolling-window line chart. Used twice on the Backtesting page:
+    once for rolling return and once for rolling volatility.
+    """
+    fig = go.Figure()
+    for position, (name, series) in enumerate(series_by_name.items()):
+        if series.empty:
+            continue
+        fig.add_scatter(
+            x=series.index, y=series.values, mode="lines", name=name,
+            line=dict(color=series_colour(name, position), width=1.5),
+            hovertemplate=f"{name}<br>%{{x|%d %b %Y}}<br><b>%{{y:.1f}}%</b><extra></extra>",
+        )
+    fig.update_layout(
+        xaxis=dict(title=None, showgrid=False),
+        yaxis=dict(title=y_title, ticksuffix="%", showgrid=True,
+                   zeroline=zero_line, zerolinecolor="#B4ACAA"),
+        legend=dict(orientation="h", y=-0.26, font=dict(size=11)),
+        margin=dict(l=6, r=10, t=6, b=4), hovermode="x unified",
+    )
+    return style(fig, height=height)
+
+
+# --------------------------------------------------------------------------- #
+# 9. correlation heatmap (CMA page)                                          #
 # --------------------------------------------------------------------------- #
 def correlation_heatmap(matrix: pd.DataFrame, height: int = 620) -> go.Figure:
     """Diverging heatmap: black = -1, cream = 0, maroon = +1."""

@@ -13,6 +13,8 @@ WHAT THIS FILE DOES
     IT OVERWRITES:
         data/model_portfolios.xlsx
         data/cma/cma_<CCY>.csv      and  data/cma/corr_<CCY>.csv
+        data/history/prices_<CCY>.csv   (by calling generate_history_data.py
+                                         at the end - one command does it all)
 
     ==> Once you have put YOUR OWN data in data/, do not run this again —
         it will overwrite it. Keep a copy of your real files elsewhere.
@@ -263,3 +265,13 @@ for ccy in CCY:
 for s in SCENARIOS:
     chk = df.groupby(["model_id", "risk_profile"])[s].sum().round(2)
     print(f"  {s}: weight-sum range {chk.min()} .. {chk.max()}")
+
+# --------------------------------------------------------------------------- #
+# finally, the daily price history the Backtesting page needs                #
+# --------------------------------------------------------------------------- #
+# Kept in its own file because it is a different job with different maths;
+# called from here so that ONE command regenerates every data file.
+print()
+print("generating daily price history...")
+import generate_history_data           # noqa: E402  (must run after the CMA files)
+generate_history_data.main()

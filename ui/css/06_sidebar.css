@@ -1,0 +1,112 @@
+/* ===========================================================================
+   06 — SIDEBAR.  The dark left-hand navigation.
+   ===========================================================================
+
+   The HTML/widgets are produced by  ui/sidebar_nav.py  — read the two files
+   together. Streamlit's own sidebar element is reused (so collapsing and the
+   mobile layout keep working) but restyled completely.
+
+   CLASS MAP
+     .nav-brand        the "CIO." wordmark block at the top
+     .nav-group        a small uppercase group label (ANALYSIS / INPUTS)
+     .nav-meta         the counts + hint at the bottom
+     button[kind="primary"]    = the ACTIVE nav item (maroon)
+     button[kind="secondary"]  = an inactive nav item
+
+   COMMON TWEAKS
+     * Sidebar width        -> [data-testid="stSidebar"] { width }
+     * Sidebar colour       -> --black in 01_variables.css
+     * Active item colour   -> --accent in 01_variables.css
+   =========================================================================== */
+
+/* ---- the panel itself ------------------------------------------------ */
+[data-testid="stSidebar"] {
+  background: var(--black) !important;
+  border-right: 1px solid #2A2830;
+  width: 268px !important;
+  min-width: 268px !important;
+}
+[data-testid="stSidebar"] > div:first-child { background: var(--black) !important; }
+[data-testid="stSidebarContent"] { background: var(--black) !important; }
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.28rem; }
+
+/* the collapse arrow — keep it, just make it visible on dark */
+[data-testid="stSidebarCollapseButton"] svg,
+[data-testid="stSidebarCollapseButton"] { color: #8A8385 !important; fill: #8A8385 !important; }
+
+/* ---- brand ----------------------------------------------------------- */
+.nav-brand {
+  padding: 0.35rem 0 1.15rem 0;
+  border-bottom: 1px solid #2A2830;
+  margin-bottom: 1rem;
+}
+.nav-brand .mark {
+  display: block;
+  font-family: var(--serif); font-weight: 600; font-size: 1.28rem;
+  color: #FFFFFF; letter-spacing: -0.01em; line-height: 1.15;
+}
+.nav-brand .mark .dot { color: var(--accent-soft); }
+.nav-brand .sub {
+  display: block; margin-top: 0.3rem;
+  font-size: 0.62rem; color: #8A8385;
+  text-transform: uppercase; letter-spacing: 0.15em; font-weight: 600;
+}
+
+/* ---- group labels ---------------------------------------------------- */
+.nav-group {
+  font-size: 0.6rem; color: #6E6A6B; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  margin: 1.1rem 0 0.45rem 0.15rem;
+}
+.nav-group:first-of-type { margin-top: 0; }
+
+/* ---- nav items (Streamlit buttons) ----------------------------------- */
+[data-testid="stSidebar"] .stButton > button {
+  width: 100%;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  color: #C9C2C0 !important;
+  font-size: 0.86rem !important;
+  font-weight: 500 !important;
+  padding: 0.48rem 0.7rem !important;
+  transition: background .14s, color .14s;
+}
+/* Streamlit centres button content with an inner flex div - override it so
+   the labels read as a normal left-aligned nav list. */
+[data-testid="stSidebar"] .stButton > button > div {
+  justify-content: flex-start !important;
+  width: 100% !important;
+}
+[data-testid="stSidebar"] .stButton > button p {
+  text-align: left !important; width: 100%; margin: 0;
+}
+[data-testid="stSidebar"] .stButton > button:hover {
+  background: #221F26 !important; color: #FFFFFF !important;
+  border-color: transparent !important;
+}
+/* the ACTIVE page */
+[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+  background: var(--accent) !important;
+  color: #FFFFFF !important;
+  border-color: var(--accent) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35);
+}
+[data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
+  background: var(--accent-soft) !important;
+}
+
+/* ---- footer meta ----------------------------------------------------- */
+.nav-meta {
+  margin-top: 1.4rem; padding-top: 0.9rem;
+  border-top: 1px solid #2A2830;
+  font-size: 0.7rem; color: #8A8385; line-height: 1.75;
+}
+.nav-meta b { color: #C9C2C0; font-weight: 600; }
+.nav-meta .hint { display: block; margin-top: 0.5rem; color: #6E6A6B; font-size: 0.66rem; }
+
+/* the Reload button sits under the meta and should look secondary */
+[data-testid="stSidebar"] .stButton > button[kind="secondary"].reload { opacity: .8; }

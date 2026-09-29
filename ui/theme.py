@@ -85,6 +85,13 @@ SCENARIO_LINE = ["#2E7D9E",      # teal    — ESAA
                  "#7E4A8E",      # plum    — DSAA 2025
                  "#4C5C68", "#9B5DA0"]   # spare colours if you add scenarios
 
+# One colour per line on the Backtesting charts. The first is maroon because
+# the first series plotted there is usually the one the user cares about, and
+# a custom portfolio is always drawn in CUSTOM_LINE so it stands out.
+SERIES_PALETTE = ["#7A1F2B", "#2E7D9E", "#B8862B", "#7E4A8E",
+                  "#4C5C68", "#2E8B6F", "#9B5DA0", "#8A8385"]
+CUSTOM_LINE = "#17161A"          # black — the user's own custom portfolio
+
 CHART_COLORWAY = [ACCENT, INK, ACCENT_SOFT, "#6E6A6B", "#C98A94",
                   "#4A4446", "#8A8385", "#5A1620", "#B0AAAB", "#2E2A2B"]
 

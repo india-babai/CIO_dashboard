@@ -21,6 +21,7 @@ subtitle = "Strategic & Tactical Asset Allocation"
 [data]
 model_portfolios = "data/model_portfolios.xlsx"
 cma_dir          = "data/cma"                      # cma_<CCY>.csv + corr_<CCY>.csv
+history_dir      = "data/history"                  # prices_<CCY>.csv (daily levels)
 # CMA edits are per-session only (kept in st.session_state) and never written to disk.
 
 # ----------------------------------------------------------------------------
@@ -41,6 +42,21 @@ benchmark = "ESAA"
 # ----------------------------------------------------------------------------
 [metrics]
 risk_free = ""
+
+# ----------------------------------------------------------------------------
+# Backtesting page
+#   rebalance      "M" monthly, "Q" quarterly, "Y" yearly, "" = buy and hold
+#   risk_free      annual %, used for Sharpe and Sortino
+#   var_confidence 0.95 -> the table reports monthly VaR / CVaR at 95%
+#   rolling_months window for the rolling return / volatility charts
+#   default_years  how much history the page shows when you first open it
+# ----------------------------------------------------------------------------
+[backtest]
+rebalance      = "M"
+risk_free      = 3.3
+var_confidence = 0.95
+rolling_months = 12
+default_years  = 10
 
 # ----------------------------------------------------------------------------
 # Efficient frontier (Optimisation section)

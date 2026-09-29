@@ -1,8 +1,8 @@
 # CIO Model Portfolio Dashboard
 
-A two-page Streamlit dashboard for CIO model portfolios: the RP1–RP5 house
-table with editable weights, and the capital market assumptions behind it.
-Re-skinned in maroon and black — no sidebar, no default Streamlit look.
+A three-page Streamlit dashboard for CIO model portfolios: the RP1–RP5 house
+table with editable weights, historical backtesting, and the capital market
+assumptions behind both. Maroon-and-black theme with a dark left-hand nav.
 
 > ### ➜ New here, or coming back after a while? Read **[HOW_TO_NAVIGATE.md](HOW_TO_NAVIGATE.md)**
 > It is the full manual: what every file does, and exactly which file to open
@@ -29,8 +29,8 @@ python -m venv .venv
 Two other commands:
 
 ```bash
-.venv/Scripts/python.exe scripts/smoke_test.py           # 46 checks, ~30s. Run after every change.
-.venv/Scripts/python.exe scripts/generate_sample_data.py # rebuild the demo data (OVERWRITES data/)
+.venv/Scripts/python.exe scripts/smoke_test.py           # 66 checks, ~40s. Run after every change.
+.venv/Scripts/python.exe scripts/generate_sample_data.py # rebuild ALL demo data incl. price history (OVERWRITES data/)
 ```
 
 ---
@@ -52,7 +52,16 @@ Change column. Below the table: a **What-if editor** that recalculates
 everything live, **charts**, and the **efficient frontier** with each
 scenario's RP1–RP5 plotted on it. One-click Excel export.
 
-**Page 2 — Capital Market Assumptions.** Expected return, volatility and the
+**Page 2 — Backtesting.** Runs the same portfolios through 20 years of daily
+price history, rebalanced monthly. Compare the three scenarios for one risk
+profile, all five risk profiles for one scenario, or **build your own portfolio**
+and test it alongside. Any period from 1Y to the full history. Growth,
+drawdown and rolling 12-month return/volatility charts, plus a full metrics
+table — CAGR, ann. volatility, Sharpe, Sortino, max drawdown, Calmar, monthly
+VaR/CVaR, best/worst month, % positive months, tracking error. Asset classes
+with no price history are reported and excluded rather than silently ignored.
+
+**Page 3 — Capital Market Assumptions.** Expected return, volatility and the
 correlation matrix, per currency. Editable — but **edits are private to your
 browser session and are never saved**. A new session always starts from the
 files in `data/`.
@@ -64,11 +73,12 @@ files in `data/`.
 ```
 app.py            entry point
 settings.toml     ALL configuration (asset classes, groups, scenarios, profiles)
-core/             pure Python — data loading, taxonomy, maths, exports
-ui/               all Streamlit — pages, sections, charts, CSS
-data/             your data: model_portfolios.xlsx + cma/*.csv
-scripts/          smoke test + sample data generator
-docs/             annotated diagrams of both pages
+core/             pure Python — data loading, taxonomy, analytics, frontier,
+                  backtest, exports
+ui/               all Streamlit — sidebar nav, pages, sections, charts, CSS
+data/             your data: model_portfolios.xlsx + cma/*.csv + history/*.csv
+scripts/          smoke test + sample data generators
+docs/             annotated diagrams of the pages
 ```
 
 Two rules explain the whole structure:
@@ -92,6 +102,9 @@ Replace the files in `data/`, keeping these schemas
 **`data/cma/cma_<CCY>.csv`** — `code`, `expected_return`, `volatility`
 
 **`data/cma/corr_<CCY>.csv`** — square correlation matrix, first column `code`
+
+**`data/history/prices_<CCY>.csv`** — daily total-return index levels:
+`date` + one column per asset code (for the Backtesting page)
 
 All figures are in **percent** (`7.0` means 7.0%, not 0.07).
 

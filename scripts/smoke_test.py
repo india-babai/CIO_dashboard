@@ -24,6 +24,9 @@ THE CHECKS, IN ORDER
     5. excel export          the workbook bytes are produced
     6. frontier              curve is well-formed; portfolios sit on/below it
     7. cma store             session edits apply and reset; new session is clean
+    8. price history         daily files load; missing columns are reported
+    9. backtest              growth, drawdown, metrics; the RP glide path makes
+                             economic sense (risk rises from RP1 to RP5)
 
 HOW TO ADD A CHECK
     Write  check(<something that should be True>, "plain english description")
@@ -39,12 +42,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 
+from core import backtest as bt
 from core.analytics import compute, portfolio_metrics
 from core.cma_store import CmaStore
 from core.config import load_config
 from core.data_loader import load_all
 from core.excel_export import workbook_bytes
 from core.frontier import build as build_frontier
+from core.history_loader import load_history
 from core.report_tables import (METRIC_ROWS, granular_block, group_block,
                                 metrics_block, stacked_block, subgroup_block)
 from core.taxonomy import model_directory, rollup, scenario_matrix
@@ -257,6 +262,97 @@ check(store.reset(sample_currency, user="smoke-test") >= 1
       "reset clears the edit")
 check(CmaStore(cfg, data.cma, {}).is_modified() is False,
       "a brand-new session starts from the imported CMA")
+
+
+# =========================================================================== #
+# 8. PRICE HISTORY                                                           #
+# =========================================================================== #
+section("8. price history")
+
+history = load_history(cfg, sample_currency)
+check(history.ok, f"[{sample_currency}] price history loads "
+                  f"(errors={history.errors})")
+
+if history.ok:
+    check(len(history.prices) > 250,
+          f"{len(history.prices):,} daily rows covering {history.years:.1f} years")
+    check(not history.missing_codes,
+          f"every asset class has prices (missing: {history.missing_codes})")
+    check(history.prices.index.is_monotonic_increasing, "dates are in order")
+    check(not history.prices.isna().any().any(), "no gaps left after cleaning")
+
+    # a column that settings.toml does not know about must be reported, and a
+    # missing column must be reported rather than silently ignored
+    trimmed = history.prices.drop(columns=history.prices.columns[:2])
+    weights_all = scenario_matrix(data.portfolios, cfg, sample_model, 3)[current_scenario]
+    aligned, dropped = bt.align_weights(weights_all, trimmed)
+    check(len(dropped) >= 1,
+          f"assets with no price history are reported, not silently dropped "
+          f"({dropped})")
+    check(abs(aligned.sum() - 1.0) < 1e-9,
+          "remaining weights are renormalised back to 100%")
+
+
+# =========================================================================== #
+# 9. BACKTEST                                                                #
+# =========================================================================== #
+section("9. backtest")
+
+if history.ok:
+    rebalance = cfg.backtest.get("rebalance", "M")
+    risk_free = float(cfg.backtest.get("risk_free", 0.0))
+
+    weights, _ = bt.align_weights(sample_weights[current_scenario], history.prices)
+    index = bt.run(history.prices, weights, rebalance=rebalance)
+
+    check(not index.empty and len(index) == len(history.prices),
+          f"backtest produces one index point per trading day ({len(index):,})")
+    check(abs(index.iloc[0] - bt.BASE_LEVEL) < 1e-6,
+          f"the index starts at {bt.BASE_LEVEL:.0f}")
+    check((index > 0).all(), "the index never goes to zero or negative")
+
+    drawdown = bt.drawdown_series(index)
+    check((drawdown <= 1e-9).all(), "drawdown is never positive")
+    check(abs(drawdown.max()) < 1e-6, "drawdown touches 0 at the peaks")
+
+    metrics = bt.summary_metrics(index, risk_free=risk_free)
+    check(all(np.isfinite(metrics[k]) for k in
+              ["Total return %", "CAGR %", "Ann. volatility %", "Max drawdown %"]),
+          f"headline metrics compute: CAGR {metrics['CAGR %']:.2f}%  "
+          f"vol {metrics['Ann. volatility %']:.2f}%  "
+          f"maxDD {metrics['Max drawdown %']:.1f}%")
+    check(metrics["Monthly CVaR 95 %"] <= metrics["Monthly VaR 95 %"] + 1e-9,
+          f"CVaR is at least as bad as VaR "
+          f"({metrics['Monthly CVaR 95 %']:.2f} <= {metrics['Monthly VaR 95 %']:.2f})")
+    check(metrics["Worst month %"] <= metrics["Best month %"],
+          "worst month is not better than best month")
+    check(0.0 <= metrics["% positive months"] <= 100.0,
+          f"% positive months is a percentage ({metrics['% positive months']:.1f})")
+
+    # tracking error against itself must be exactly zero
+    self_te = bt.summary_metrics(index, benchmark=index)["Tracking error %"]
+    check(abs(self_te) < 1e-9, "tracking error against itself is 0")
+
+    # the glide path: risk must increase from RP1 to RP5
+    vols, drawdowns = [], []
+    for rp in cfg.rp_ids:
+        rp_weights = scenario_matrix(data.portfolios, cfg, sample_model, rp)[current_scenario]
+        aligned_rp, _ = bt.align_weights(rp_weights, history.prices)
+        rp_metrics = bt.summary_metrics(bt.run(history.prices, aligned_rp, rebalance),
+                                        risk_free=risk_free)
+        vols.append(rp_metrics["Ann. volatility %"])
+        drawdowns.append(rp_metrics["Max drawdown %"])
+    check(all(b > a for a, b in zip(vols, vols[1:])),
+          f"volatility rises with every risk profile "
+          f"({vols[0]:.1f}% -> {vols[-1]:.1f}%)")
+    check(all(b < a for a, b in zip(drawdowns, drawdowns[1:])),
+          f"max drawdown deepens with every risk profile "
+          f"({drawdowns[0]:.1f}% -> {drawdowns[-1]:.1f}%)")
+
+    frame = bt.metrics_frame({"A": index, "B": index}, benchmark_name="A",
+                             risk_free=risk_free)
+    check(list(frame.index) == bt.METRIC_ROWS,
+          f"metrics table has the {len(bt.METRIC_ROWS)} expected rows")
 
 
 # =========================================================================== #

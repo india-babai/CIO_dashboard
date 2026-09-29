@@ -73,6 +73,14 @@ class Config:
         return self._raw.get("frontier", {"points": 120, "risk_free": ""})
 
     @property
+    def backtest(self) -> dict:
+        """The [backtest] table, with defaults if the section is absent."""
+        return self._raw.get("backtest", {
+            "rebalance": "M", "risk_free": 0.0, "var_confidence": 0.95,
+            "rolling_months": 12, "default_years": 10,
+        })
+
+    @property
     def metrics_risk_free(self):
         v = str(self._raw.get("metrics", {}).get("risk_free", "")).strip()
         return float(v) if v else None
