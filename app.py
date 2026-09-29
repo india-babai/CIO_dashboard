@@ -11,10 +11,11 @@ WHAT THIS FILE DOES
         2. injects the stylesheet            -> ui/styling.py
         3. loads settings.toml + data/       -> core/config.py, core/data_loader.py
         4. draws the left-hand navigation    -> ui/sidebar_nav.py
-        5. hands over to one of the three pages
+        5. hands over to one of the four pages
 
     All the real work is in the page files:
-        ui/page_portfolios.py    the model portfolio landing page
+        ui/page_start.py         the read-me page users land on
+        ui/page_portfolios.py    the model portfolio house table
         ui/page_backtest.py      historical backtesting
         ui/page_cma.py           capital market assumptions (the inputs)
 
@@ -23,9 +24,11 @@ WHAT THIS FILE DOES
 WHERE TO CHANGE WHAT
     * Browser tab title / icon -> settings.toml [app].title
     * The navigation itself    -> ui/sidebar_nav.py  NAV_GROUPS
-    * Add a FOURTH page        -> add it to NAV_GROUPS in ui/sidebar_nav.py,
+    * Add another page         -> add it to NAV_GROUPS in ui/sidebar_nav.py,
                                   write ui/page_<name>.py, then add one branch
                                   to the if/elif in main() below
+    * Which page loads first   -> ui/sidebar_nav.py  DEFAULT_PAGE
+    * The downloadable report  -> ui/report_builder.py + core/report_export.py
     * The footer text          -> _render_footer() below
 """
 from __future__ import annotations
@@ -37,7 +40,8 @@ import streamlit as st
 from core.cma_store import CmaStore
 from core.config import load_config
 from core.data_loader import load_all
-from ui import page_backtest, page_cma, page_portfolios, sidebar_nav
+from ui import (page_backtest, page_cma, page_portfolios, page_start,
+                sidebar_nav)
 from ui.styling import inject_css
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -146,12 +150,14 @@ def main() -> None:
     # st.session_state, so it is per-user and never written to disk.
     store = CmaStore(cfg, data.cma, st.session_state)
 
-    page = sidebar_nav.render(cfg, data, on_reload=_clear_caches)
+    page = sidebar_nav.render(cfg, data, store, on_reload=_clear_caches)
 
     _render_session_banner(store)
     _render_data_warnings(data)
 
-    if page == sidebar_nav.PORTFOLIOS:
+    if page == sidebar_nav.START:
+        page_start.render(cfg, data, store)
+    elif page == sidebar_nav.PORTFOLIOS:
         page_portfolios.render(cfg, data, store)
     elif page == sidebar_nav.BACKTEST:
         page_backtest.render(cfg, data, store)

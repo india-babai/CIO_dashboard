@@ -1,8 +1,10 @@
 # CIO Model Portfolio Dashboard
 
-A three-page Streamlit dashboard for CIO model portfolios: the RP1–RP5 house
-table with editable weights, historical backtesting, and the capital market
-assumptions behind both. Maroon-and-black theme with a dark left-hand nav.
+A four-page Streamlit dashboard for CIO model portfolios: a plain-English
+guide page, the RP1–RP5 house table with editable weights, historical
+backtesting, and the capital market assumptions behind both. Everything on
+screen can be pulled down as a single multi-sheet Excel report. Maroon-and-
+black theme with a dark left-hand nav.
 
 > ### ➜ New here, or coming back after a while? Read **[HOW_TO_NAVIGATE.md](HOW_TO_NAVIGATE.md)**
 > It is the full manual: what every file does, and exactly which file to open
@@ -29,13 +31,18 @@ python -m venv .venv
 Two other commands:
 
 ```bash
-.venv/Scripts/python.exe scripts/smoke_test.py           # 66 checks, ~40s. Run after every change.
+.venv/Scripts/python.exe scripts/smoke_test.py           # 67 checks, ~40s. Run after every change.
 .venv/Scripts/python.exe scripts/generate_sample_data.py # rebuild ALL demo data incl. price history (OVERWRITES data/)
 ```
 
 ---
 
 ## What it does
+
+**Page 0 — Start here.** The landing page: a two-minute, plain-English guide
+to the other three, aimed at whoever is *using* the dashboard rather than
+maintaining it. Static text only, so it loads even if the data files are
+broken.
 
 **Page 1 — Portfolios.** Pick one model portfolio. Its five risk profiles are
 shown side by side in the house format:
@@ -65,6 +72,17 @@ with no price history are reported and excluded rather than silently ignored.
 correlation matrix, per currency. Editable — but **edits are private to your
 browser session and are never saved**. A new session always starts from the
 files in `data/`.
+
+**Download full report** (in the sidebar, on every page). Builds one `.xlsx`
+with 17 named sheets covering the selected model end to end: the allocation
+table per risk profile and combined, risk-return metrics, the CMA and
+correlation matrix, the efficient frontier and each portfolio's gap to it, and
+every backtest series and metric — with native Excel line and scatter charts
+on the growth, drawdown and frontier sheets. It includes any weight or CMA
+edits made in the session, and takes about 8 seconds to build.
+
+Because nothing a user changes is ever written to disk, this report is the
+only way to keep anything.
 
 ---
 

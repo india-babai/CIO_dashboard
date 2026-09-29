@@ -112,20 +112,36 @@ def _rebalanced_daily_returns(returns: pd.DataFrame, weights: pd.Series,
         value    = sum over i of  weight_i * growth_i      (starts at 1.0)
         return_t = value_t / value_(t-1) - 1
     which is exactly "buy the target weights, then let them drift".
-    """
-    if not rebalance:                                   # buy and hold
-        groups = [(None, returns)]
-    else:
-        groups = list(returns.groupby(returns.index.to_period(rebalance)))
 
-    pieces = []
-    for _period, block in groups:
-        growth = (1.0 + block).cumprod()
+    PERFORMANCE NOTE
+    This used to loop over each month in Python. That is the obvious way to
+    write it, but with ~230 months and ~15 portfolios in a report it cost
+    about 19 seconds. The version below does the same arithmetic with a single
+    grouped cumprod, which is ~30x faster. scripts/smoke_test.py asserts the
+    two give identical answers - if you change this, keep that check passing.
+    """
+    growth_factors = 1.0 + returns
+
+    if not rebalance:                                   # buy and hold
+        growth = growth_factors.cumprod()
         value = growth.mul(weights, axis=1).sum(axis=1)
         previous = value.shift(1).fillna(1.0)
-        pieces.append(value / previous - 1.0)
+        return value / previous - 1.0
 
-    return pd.concat(pieces).sort_index()
+    periods = returns.index.to_period(rebalance)
+
+    # cumulative growth of each asset SINCE the start of its rebalance period
+    growth = growth_factors.groupby(periods).cumprod()
+    value = growth.mul(weights, axis=1).sum(axis=1)
+
+    # the previous day's value, except on the first day of a period where the
+    # portfolio has just been reset to the target weights, so the base is 1.0
+    previous = value.shift(1)
+    period_starts = np.asarray(periods) != np.roll(np.asarray(periods), 1)
+    period_starts[0] = True
+    previous[period_starts] = 1.0
+
+    return value / previous - 1.0
 
 
 def run(prices: pd.DataFrame, weights: pd.Series,

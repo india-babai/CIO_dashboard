@@ -41,6 +41,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
+import pandas as pd
 
 from core import backtest as bt
 from core.analytics import compute, portfolio_metrics
@@ -353,6 +354,31 @@ if history.ok:
                              risk_free=risk_free)
     check(list(frame.index) == bt.METRIC_ROWS,
           f"metrics table has the {len(bt.METRIC_ROWS)} expected rows")
+
+    # REGRESSION GUARD ---------------------------------------------------
+    # _rebalanced_daily_returns() was rewritten from a per-month Python loop
+    # to a single grouped cumprod for speed (~19s -> ~1s across a report).
+    # The obvious loop version is reproduced here; the two must agree exactly.
+    def _reference_loop(returns, weights, rebalance):
+        groups = ([(None, returns)] if not rebalance
+                  else list(returns.groupby(returns.index.to_period(rebalance))))
+        pieces = []
+        for _period, block in groups:
+            grown = (1.0 + block).cumprod()
+            value = grown.mul(weights, axis=1).sum(axis=1)
+            pieces.append(value / value.shift(1).fillna(1.0) - 1.0)
+        return pd.concat(pieces).sort_index()
+
+    aligned_columns = list(weights.index)
+    daily_returns = history.prices[aligned_columns].pct_change().fillna(0.0)
+    worst_difference = 0.0
+    for frequency in ["M", "Q", "Y", None]:
+        fast = bt._rebalanced_daily_returns(daily_returns, weights, frequency)
+        slow = _reference_loop(daily_returns, weights, frequency)
+        worst_difference = max(worst_difference, float((fast - slow).abs().max()))
+    check(worst_difference < 1e-12,
+          f"vectorised rebalancing matches the reference loop exactly "
+          f"(worst difference {worst_difference:.1e})")
 
 
 # =========================================================================== #

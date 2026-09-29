@@ -19,7 +19,7 @@ want to make.
 7. [Reference: `settings.toml`](#7-reference-settingstoml)
 8. [Reference: the data files](#8-reference-the-data-files)
 9. [How data flows through the app](#9-how-data-flows-through-the-app)
-10. [Six things that will surprise you](#10-six-things-that-will-surprise-you)
+10. [Eight things that will surprise you](#10-eight-things-that-will-surprise-you)
 11. [Troubleshooting](#11-troubleshooting)
 12. [Glossary](#12-glossary)
 
@@ -27,9 +27,15 @@ want to make.
 
 ## 1. What this app is — 60 seconds
 
-A three-page Streamlit dashboard for browsing CIO model portfolios. The pages
+A four-page Streamlit dashboard for browsing CIO model portfolios. The pages
 are reached from the dark **left-hand sidebar**, which groups them into
-*Analysis* (things you look at) and *Inputs* (the control panel behind them).
+*Guide* (how to use it), *Analysis* (things you look at) and *Inputs* (the
+control panel behind them). The sidebar also carries the **Download full
+report** button.
+
+**Page 0 — Start here.** The page users land on: a plain-English guide to the
+other three, written for the reader rather than the maintainer. It is pure
+static text — it calculates nothing, so it loads even if the data is broken.
 
 **Page 1 — Portfolios.** You pick one model portfolio from a dropdown. It shows
 that model's five risk profiles (RP1…RP5) **side by side** in the house table
@@ -56,6 +62,7 @@ Three facts that explain most of the design:
 | Each model carries its own currency | There is no currency picker — picking the model picks the CMA |
 | Each model/profile has **three** weight sets (ESAA, DSAA 2026, DSAA 2025) | Every table has one column per scenario, plus a "Change" column |
 | CMA edits are a personal scratchpad | Nothing is ever written to disk; a new session starts clean |
+| Nothing a user changes survives the tab closing | The sidebar's **Download full report** is the only way to keep anything |
 
 ---
 
@@ -89,7 +96,7 @@ Then open the URL it prints (usually <http://localhost:8501>).
 ```bash
 .venv/Scripts/python.exe scripts/smoke_test.py
 ```
-Checks all the data and maths without launching the app. ~40 seconds, 66
+Checks all the data and maths without launching the app. ~40 seconds, 67
 checks. **Run this after every change.** If it passes, your problem is in the
 `ui/` folder; if it fails, it's in `core/` or your data.
 
@@ -108,7 +115,7 @@ real data is in there.**
 | `numpy` | the matrix maths in `core/analytics.py` |
 | `plotly` | all charts |
 | `scipy` | **only** the efficient frontier optimiser. If missing, the app still runs and that one section shows a message |
-| `openpyxl` | reading `.xlsx` data and writing the Excel download |
+| `openpyxl` | reading `.xlsx` data, and writing both Excel downloads (the table export and the full report) |
 
 ---
 
@@ -133,7 +140,8 @@ CIO_dashboard/
 │   │                         error, contributions
 │   ├── frontier.py           the efficient frontier optimiser (SciPy)
 │   ├── report_tables.py    ★ the four table blocks every display shares
-│   ├── excel_export.py       builds the .xlsx download
+│   ├── excel_export.py       the small .xlsx download under the house table
+│   ├── report_export.py      the BIG .xlsx — 17 sheets, with native charts
 │   ├── history_loader.py     reads data/history/prices_<CCY>.csv
 │   ├── backtest.py         ★ ALL the backtest maths: growth, drawdown,
 │   │                         VaR/CVaR, Sharpe, rolling windows
@@ -145,7 +153,9 @@ CIO_dashboard/
 │   ├── widgets.py            section_heading(), card_title(), …
 │   ├── charts.py           ★ every Plotly figure in the app
 │   ├── weight_edits.py     ★ the session copy of the weights you edit
+│   ├── report_builder.py     gathers session state for the full report
 │   ├── sidebar_nav.py      ★ the dark left navigation; ADD A PAGE HERE
+│   ├── page_start.py         page 0 — the read-me users land on
 │   ├── page_portfolios.py  ★ page 1 — reads like a table of contents
 │   ├── page_backtest.py      page 2
 │   ├── page_cma.py           page 3
@@ -237,20 +247,54 @@ The same information as text, top to bottom:
 ```
 ┌──────────────────────┐
 │ CIO.                 │  ui/sidebar_nav.py  _render_brand()
+│ Model Portfolios     │
 │ STRATEGIC & TACTICAL │
 ├──────────────────────┤
-│ ANALYSIS             │  ui/sidebar_nav.py  NAV_GROUPS  ← ADD A PAGE HERE
-│   Portfolios         │  active item = st.button(type="primary"),
-│   Backtesting        │  painted maroon by ui/css/06_sidebar.css
+│ GUIDE                │  ui/sidebar_nav.py  NAV_GROUPS  ← ADD A PAGE HERE
+│   Start here         │  active item = st.button(type="primary"),
+│                      │  painted maroon by ui/css/06_sidebar.css
+│ ANALYSIS             │
+│   Portfolios         │
+│   Backtesting        │
 │                      │
 │ INPUTS               │
 │   Capital Market     │
 │   Assumptions        │
 ├──────────────────────┤
+│ REPORT               │  ui/sidebar_nav.py  _render_report_button()
+│ ⬇ Build full report  │  builds it → ui/report_builder.py
+│ ⬇ Download .xlsx     │  appears only after the build finishes
+├──────────────────────┤
 │ 10 model portfolios  │  ui/sidebar_nav.py  _render_meta()
 │ ↻ Reload data        │  clears the data caches in app.py
 └──────────────────────┘
 ```
+
+The report button is **two clicks on purpose**: Streamlit's
+`st.download_button` needs the file's bytes *before* it can be drawn, and
+building the report takes several seconds. Building on every page load would
+make the whole app feel slow, so the first button builds and stores the bytes
+in session state, and the second one hands them over. See §10.7.
+
+### Page 0 — Start here
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ START HERE / How to use this dashboard                               │  ui/page_start.py
+├──────────────────────────────────────────────────────────────────────┤     render()
+│ ┌────────────┐ ┌────────────┐ ┌────────────┐                         │
+│ │1·Portfolios│ │2·Backtest. │ │3·CMA       │   what each page is for  │
+│ └────────────┘ └────────────┘ └────────────┘                         │
+│ GOOD TO KNOW                                                         │
+│ ┌────────────┐ ┌────────────┐ ┌────────────┐                         │
+│ │Nothing is  │ │Download    │ │Where the   │                         │
+│ │saved       │ │full report │ │numbers are │                         │
+│ └────────────┘ └────────────┘ └────────────┘                         │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+It is **all literal text** — no data reads, no maths. Edit the wording
+directly in `ui/page_start.py`; there is nothing else to keep in sync.
 
 ### Page 1 — Portfolios
 
@@ -365,6 +409,8 @@ need to touch unless stated otherwise.
 | Change chart line colours on the frontier | `ui/theme.py` | `SCENARIO_LINE` |
 | **Change the sidebar colour / width** | `ui/css/06_sidebar.css` | `[data-testid="stSidebar"] { width }`; the colour is `--black` in `01_variables.css` |
 | Change the active nav item's colour | `ui/css/01_variables.css` | `--accent` (the active item is `button[kind="primary"]`) |
+| **Sidebar text overlapping itself** | `ui/css/06_sidebar.css` | Two known causes, both commented in that file: a `line-height` below 1.3 on the Fraunces wordmark, and using `:first-of-type` on `.nav-group`. See §10.8. |
+| Change the sidebar group headings (GUIDE / ANALYSIS / INPUTS) | `ui/sidebar_nav.py` | `NAV_GROUPS` — the dict key is the heading |
 | Restyle a Streamlit control | `ui/css/04_widgets.css` | Each widget has its own labelled block |
 | A Streamlit element reappeared after upgrading | `ui/css/02_streamlit_reset.css` | Right-click it → Inspect → copy its `data-testid` → add it to the list |
 
@@ -427,7 +473,13 @@ All in **`settings.toml`**. Restart the app afterwards (see §10.2).
 | **Add a new page** | 1. Write `ui/page_mypage.py` with `render(cfg, data, store)`. 2. Add `("My page", "mypage")` to `NAV_GROUPS` in `ui/sidebar_nav.py`. 3. Add one `elif` branch in `app.py` `main()`. |
 | Reorder / regroup the nav | `ui/sidebar_nav.py` → `NAV_GROUPS` |
 | Move a page between Analysis and Inputs | `ui/sidebar_nav.py` → `NAV_GROUPS` |
-| Change what the Excel download contains | `core/report_tables.py` → `stacked_block()` (layout) or `core/excel_export.py` (sheets) |
+| Change what the **small** Excel download contains | `core/report_tables.py` → `stacked_block()` (layout) or `core/excel_export.py` (sheets) |
+| **Change what the full report contains** | `core/report_export.py` → `build_workbook()`. One `_sheet(...)` call per sheet; the README sheet is written last and moved to the front. |
+| **Feed the full report something new** | `ui/report_builder.py` → `build()`. That file is the only part of the report that may touch `st.session_state`; `core/report_export.py` must stay Streamlit-free. |
+| Move or relabel the report button | `ui/sidebar_nav.py` → `_render_report_button()` |
+| Change the report filename | `ui/report_builder.py` → the last two lines of `build()` |
+| **Edit the wording of the Start here page** | `ui/page_start.py` — it is all literal text |
+| Land users on a different page | `ui/sidebar_nav.py` → `DEFAULT_PAGE` |
 | Change which columns the What-if editor exposes | `ui/sections/whatif_editor.py` → `columns` |
 
 ### 6.6 Data and deployment
@@ -596,13 +648,37 @@ CMA:
   ui/sections/backtest_results.py   growth, drawdown, rolling, metrics table
 ```
 
-The key thing: **the house table, the charts, the frontier and the Excel export
-all read the same session weights.** That is why editing one number updates
-everything at once.
+The full report joins both chains at the end. It is the only thing in the app
+that runs *everything* at once:
+
+```
+  sidebar "⬇ Build full report"
+              │
+              ▼
+  ui/report_builder.py     reads st.session_state: which model is selected,
+              │            which weights were edited, which CMA is in force
+              ├──────────► core/frontier.py      (re-solved)
+              ├──────────► core/report_tables.py (the house table, wide)
+              ├──────────► core/backtest.py      (all 5 RP x 3 scenarios,
+              │                                   over the FULL history)
+              ▼
+  core/report_export.py    → 17 sheets of .xlsx bytes, 3 native Excel charts
+              │
+              ▼
+  sidebar "⬇ Download .xlsx"
+```
+
+Note what it does *not* do: it never reads the Backtesting page's period or
+comparison controls. A downloaded report is deliberately complete rather than
+a snapshot of whatever one screen happens to be showing.
+
+The key thing: **the house table, the charts, the frontier, both Excel exports
+and the backtest all read the same session weights.** That is why editing one
+number updates everything at once.
 
 ---
 
-## 10. Six things that will surprise you
+## 10. Eight things that will surprise you
 
 ### 10.1 The house table is hand-written HTML, not `st.dataframe`
 
@@ -676,6 +752,62 @@ The "return gap" column is the price of those constraints. A gap of 1–2
 percentage points is normal. A gap of **zero or negative** would mean something
 is wrong — the smoke test checks for exactly that.
 
+### 10.7 The report button builds first and downloads second
+
+Streamlit's `st.download_button` has to be handed the finished bytes at the
+moment it is *drawn*. There is no "generate on click". Since the report takes
+several seconds to build, wiring it up directly would mean rebuilding it on
+every single rerun — every dropdown change, every edited weight — and the
+whole app would crawl.
+
+So `ui/sidebar_nav.py` `_render_report_button()` does it in two steps:
+
+```
+click "⬇ Build full report"  ->  ui/report_builder.py build()
+                                 bytes stashed in st.session_state[REPORT_KEY]
+                                 rerun
+                             ->  "⬇ Download .xlsx (750 KB)" now appears
+```
+
+If you ever see only the build button after clicking it, the build raised —
+the error is shown in the sidebar.
+
+**Speed.** The build is dominated by the backtests: 5 risk profiles x 3
+scenarios = 15 portfolios over 20 years of daily data. This used to take 19
+seconds because `core/backtest.py` looped over each month in Python; it now
+does the same arithmetic with one grouped `cumprod` and takes about 1 second,
+for a whole report in roughly 8. `scripts/smoke_test.py` reimplements the old
+loop and asserts the two agree to the last bit — **if you touch
+`_rebalanced_daily_returns()`, keep that check passing.**
+
+### 10.8 Two CSS traps specific to the sidebar
+
+Both of these produced overlapping text at some point, and both are commented
+in `ui/css/06_sidebar.css`. They are worth knowing before you next edit it.
+
+**1. `:first-of-type` matches every `.nav-group`.** Streamlit wraps *each*
+`st.markdown()` call in its own container. So the GUIDE, ANALYSIS and INPUTS
+headings are not siblings — each is the only child of its own wrapper, which
+makes every one of them the "first of type". A rule meant to remove the top
+margin from the first heading silently removed it from all of them, and the
+headings collided with the buttons above. Use a plain `margin` on
+`.nav-group`, not a `:first-of-type` exception.
+
+**2. Display serifs need room.** The `CIO.` wordmark is set in Fraunces, a
+display serif whose glyphs paint outside a tight line box. At `line-height:
+1.15` the descenders overlapped the line below. Keep `.nav-brand .mark` at
+**1.3 or more**. The same applies if you swap in another display face.
+
+More generally, when a Streamlit control ignores your CSS: right-click it in
+the browser, Inspect, and read the real `data-testid`. Streamlit's class names
+are generated and change between versions — the `data-testid` attributes are
+the stable hook. Two that are easy to get wrong:
+
+| What you want to style | The selector that actually works |
+|---|---|
+| A segmented control's selected button | `[data-testid="stButtonGroup"] button[data-variant="segmented_control"][data-selected="true"]` |
+| A sidebar button's *label* (e.g. to left-align it) | `[data-testid="stSidebar"] .stButton > button > div` — Streamlit centres the label with an inner flex div, so styling the `button` alone does nothing |
+
 ---
 
 ## 11. Troubleshooting
@@ -702,6 +834,13 @@ is wrong — the smoke test checks for exactly that.
 | Backtest CAGR disagrees with the CMA | Expected — CMA is forward-looking arithmetic, backtest is realised geometric | Geometric return is always below arithmetic by roughly ½σ² |
 | Two backtest lines sit on top of each other | ESAA and DSAA differ by only a point or two of weight | That *is* the finding. Click a legend entry to isolate one. |
 | Sidebar disappeared | A CSS edit re-hid it | Check `ui/css/02_streamlit_reset.css` does not list `stSidebar` |
+| Sidebar text sits on top of other text | A `:first-of-type` rule, or too tight a `line-height` on the wordmark | §10.8 — both traps are commented in `ui/css/06_sidebar.css` |
+| Sidebar nav labels are centred, not left-aligned | Streamlit centres the label in an inner flex `div` | Style `.stButton > button > div`, not the `button`. §10.8 |
+| Clicked "Build full report", nothing downloaded | The build raised | The error prints in the sidebar. Most often SciPy missing (no frontier sheets) or no `data/history/` file |
+| The report takes much longer than ~10 seconds | `_rebalanced_daily_returns()` was changed back to a Python loop | §10.7. Run the smoke test — it checks this |
+| The report is missing the backtest sheets | No price history for that model's currency | Add `data/history/prices_<CCY>.csv`. The README sheet inside the report says so too |
+| The report ignores a weight I edited | You edited on the Backtesting page's *custom* portfolio | Only the Portfolios page's What-if edits go into the report — that is `ui/weight_edits.py` state |
+| "Start here" page is blank | `ui/page_start.py` raised | It reads only `data.portfolios` for a count; check the Data checks expander |
 
 **When in doubt, run the smoke test.** It tells you which half of the codebase
 the problem is in.
@@ -734,7 +873,8 @@ the problem is in.
 | **Calmar** | CAGR ÷ |max drawdown| — return per unit of worst-case pain |
 | **Rebalancing** | Resetting drifted weights back to target. Monthly here. |
 | **Total-return index** | A price series with income reinvested |
-| **House format / house table** | The RP1–RP5 layout on the landing page |
+| **House format / house table** | The RP1–RP5 layout on the Portfolios page |
+| **Full report** | The 17-sheet Excel file built by the sidebar button. Not to be confused with the small per-RP download under the house table. |
 | `cfg` | The config object from `core/config.py` — appears in almost every function |
 | `data` / `LoadResult` | Everything read from `data/`, from `core/data_loader.py` |
 | `store` | The `CmaStore` — imported CMA plus this session's edits |
@@ -746,6 +886,8 @@ the problem is in.
 
 The fastest way to find anything:
 
+0. If you are a *user* rather than a maintainer, the app's own **Start here**
+   page answers most questions. This file is for changing the code.
 1. Open `docs/page-1-portfolios.svg` — find the region of the screen you care
    about, read the filename on it.
 2. Open that file — read the header block at the top.
