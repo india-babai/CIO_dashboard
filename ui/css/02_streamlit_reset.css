@@ -11,13 +11,55 @@
    data-testid, and add it to the matching list below.
    =========================================================================== */
 
-/* top-right menu, header bar, toolbar, running indicator, footer */
+/* top-right menu, Deploy button, running indicator, coloured bar, footer */
 #MainMenu,
-header[data-testid="stHeader"],
-[data-testid="stToolbar"],
+[data-testid="stMainMenu"],
+[data-testid="stAppDeployButton"],
+[data-testid="stToolbarActions"],
 [data-testid="stDecoration"],
 [data-testid="stStatusWidget"],
 footer { display: none !important; }
+
+/* ---------------------------------------------------------------------------
+   THE HEADER IS *NOT* display:none - AND THAT IS DELIBERATE.
+
+   It used to be, which looked right but stranded anyone who collapsed the
+   sidebar: the arrow that brings the sidebar back lives INSIDE this header,
+   so hiding the header removed the only way back to the navigation. A
+   display:none parent cannot be overridden by a rule on its child, so the
+   header has to stay in the layout.
+
+   Instead it is made invisible: transparent, and click-through, so the page
+   looks exactly as it did. Everything inside it is hidden by the list above -
+   except the expand arrow, which gets its clicks back below.
+
+   It keeps a small height on purpose. The header is position:absolute, so its
+   height costs no layout space and pushes nothing down - but at height 0 the
+   toolbar centres the arrow on y=0 and the top half of it sits above the
+   window, leaving a 14px sliver to hit. 3rem puts the whole arrow on screen.
+
+   The DOM is:  stHeader > stToolbar > ... > stExpandSidebarButton
+                                     > stToolbarActions / Deploy / MainMenu
+   --------------------------------------------------------------------------- */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    height: 3rem !important;
+    min-height: 0 !important;
+    pointer-events: none;            /* clicks fall through to the page */
+}
+
+[data-testid="stToolbar"] {
+    background: transparent !important;
+    pointer-events: none;
+}
+
+/* the one control we keep: "bring the sidebar back" */
+[data-testid="stExpandSidebarButton"] {
+    pointer-events: auto;            /* ... but this one is clickable */
+    color: var(--ink) !important;
+    opacity: 0.55;
+}
+[data-testid="stExpandSidebarButton"]:hover { opacity: 1; }
 
 /* NOTE: the sidebar is NOT hidden any more - it is the app's navigation.
    It is restyled in 06_sidebar.css. Only Streamlit's own chrome is removed. */

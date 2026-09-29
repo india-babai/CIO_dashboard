@@ -780,10 +780,10 @@ for a whole report in roughly 8. `scripts/smoke_test.py` reimplements the old
 loop and asserts the two agree to the last bit — **if you touch
 `_rebalanced_daily_returns()`, keep that check passing.**
 
-### 10.8 Two CSS traps specific to the sidebar
+### 10.8 Three CSS traps around the sidebar
 
-Both of these produced overlapping text at some point, and both are commented
-in `ui/css/06_sidebar.css`. They are worth knowing before you next edit it.
+All three produced a visible bug at some point, and all three are commented in
+the CSS. They are worth knowing before you next edit it.
 
 **1. `:first-of-type` matches every `.nav-group`.** Streamlit wraps *each*
 `st.markdown()` call in its own container. So the GUIDE, ANALYSIS and INPUTS
@@ -797,6 +797,24 @@ headings collided with the buttons above. Use a plain `margin` on
 display serif whose glyphs paint outside a tight line box. At `line-height:
 1.15` the descenders overlapped the line below. Keep `.nav-brand .mark` at
 **1.3 or more**. The same applies if you swap in another display face.
+
+**3. Hiding Streamlit's header traps anyone who collapses the sidebar.**
+`ui/css/02_streamlit_reset.css` used to carry
+`header[data-testid="stHeader"] { display: none }`. That looked right, but the
+`»` arrow that brings the sidebar *back* lives inside that header — so once a
+user collapsed the navigation, their only way back was to reload with a fresh
+session. A `display:none` parent cannot be overridden by a rule on its child,
+so the header has to stay in the layout.
+
+It is now transparent, `pointer-events: none` (clicks fall straight through to
+the page), and everything inside it is hidden by name — Deploy, the hamburger,
+the status widget — *except* `stExpandSidebarButton`, which gets
+`pointer-events: auto` back. It also keeps `height: 3rem`: the header is
+`position: absolute`, so that costs no layout space, but at height 0 the
+toolbar centres the arrow on `y = 0` and half of it sits above the window.
+
+If you ever add something to that hidden list, hide the **specific**
+`data-testid`, not the header.
 
 More generally, when a Streamlit control ignores your CSS: right-click it in
 the browser, Inspect, and read the real `data-testid`. Streamlit's class names
@@ -834,6 +852,7 @@ the stable hook. Two that are easy to get wrong:
 | Backtest CAGR disagrees with the CMA | Expected — CMA is forward-looking arithmetic, backtest is realised geometric | Geometric return is always below arithmetic by roughly ½σ² |
 | Two backtest lines sit on top of each other | ESAA and DSAA differ by only a point or two of weight | That *is* the finding. Click a legend entry to isolate one. |
 | Sidebar disappeared | A CSS edit re-hid it | Check `ui/css/02_streamlit_reset.css` does not list `stSidebar` |
+| Collapsed the sidebar and cannot get it back | The `»` arrow lives in Streamlit's header — something re-hid it | §10.8 trap 3. Reload the page as a stopgap. |
 | Sidebar text sits on top of other text | A `:first-of-type` rule, or too tight a `line-height` on the wordmark | §10.8 — both traps are commented in `ui/css/06_sidebar.css` |
 | Sidebar nav labels are centred, not left-aligned | Streamlit centres the label in an inner flex `div` | Style `.stButton > button > div`, not the `button`. §10.8 |
 | Clicked "Build full report", nothing downloaded | The build raised | The error prints in the sidebar. Most often SciPy missing (no frontier sheets) or no `data/history/` file |
