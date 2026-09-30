@@ -12,9 +12,9 @@ WHAT THIS FILE DOES
 
     Exit code 0 = all good. Exit code 1 = at least one check failed.
 
-    Because it imports nothing from ui/, a failure here is always a DATA or
-    MATHS problem, never a layout problem. That split is deliberate: it tells
-    you immediately which half of the codebase to look in.
+    Because it imports nothing from ui/, a failure in sections 1-9 is always a
+    DATA or MATHS problem, never a layout problem. That split is deliberate:
+    it tells you immediately which half of the codebase to look in.
 
 THE CHECKS, IN ORDER
     1. data loads            files exist, columns present, weights sum to 100
@@ -27,6 +27,13 @@ THE CHECKS, IN ORDER
     8. price history         daily files load; missing columns are reported
     9. backtest              growth, drawdown, metrics; the RP glide path makes
                              economic sense (risk rises from RP1 to RP5)
+   10. documentation         every file and function named in HOW_TO_NAVIGATE.md,
+                             README.md and docs/*.svg still exists
+
+    Section 10 is the odd one out: it checks the DOCS, not the code. It is
+    there because this repository is maintained without an assistant, and a
+    guide that names deleted functions is worse than no guide. If it fails,
+    fix the document - do not delete the check.
 
 HOW TO ADD A CHECK
     Write  check(<something that should be True>, "plain english description")
@@ -379,6 +386,120 @@ if history.ok:
     check(worst_difference < 1e-12,
           f"vectorised rebalancing matches the reference loop exactly "
           f"(worst difference {worst_difference:.1e})")
+
+
+# =========================================================================== #
+# 10. THE DOCUMENTATION STILL POINTS AT REAL CODE                            #
+# =========================================================================== #
+#
+# WHY THIS SECTION EXISTS
+#   HOW_TO_NAVIGATE.md and the diagrams in docs/ are the whole plan for
+#   maintaining this repo without help. They are worth nothing if they name
+#   files and functions that have been renamed since.
+#
+#   That is not hypothetical: when the left-hand navigation was added, it
+#   deleted app.py's _render_top_bar() and _render_navigation(), and
+#   docs/page-1-portfolios.svg went on pointing at both of them for weeks.
+#   Anyone following the diagram would have searched app.py, found nothing,
+#   and stopped trusting the documentation entirely.
+#
+#   So: every "some/file.py" and every "file.py  some_function()" written in
+#   the docs is checked here against the actual source. If you rename
+#   something and forget the docs, this fails and names the file.
+#
+# HOW IT WORKS
+#   The docs use one consistent notation - a path, optionally followed by a
+#   function name with brackets. That is all this parses. It deliberately does
+#   NOT try to understand prose; a reference only counts if it looks like a
+#   path ending in .py, .css, .toml, .md, .xlsx or .csv.
+#
+section("10. documentation points at code that exists")
+
+import re                                          # noqa: E402  (local to here)
+
+PROJECT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+DOC_FILES = ["HOW_TO_NAVIGATE.md", "README.md",
+             os.path.join("docs", "page-1-portfolios.svg"),
+             os.path.join("docs", "page-2-backtest.svg"),
+             os.path.join("docs", "page-3-cma.svg")]
+
+# a path like core/backtest.py or ui/css/06_sidebar.css
+PATH_RE = re.compile(r"\b((?:[A-Za-z0-9_.\-]+/)*[A-Za-z0-9_\-]+"
+                     r"\.(?:py|css|toml|md|xlsx|csv))\b")
+# that same path followed by  some_function()
+PAIR_RE = re.compile(r"\b((?:[A-Za-z0-9_.\-]+/)*[A-Za-z0-9_\-]+\.py)\s+"
+                     r"([A-Za-z_][A-Za-z0-9_]*)\(\)")
+
+# Paths that are examples rather than real files, or are created at runtime.
+ALLOWED_MISSING = {
+    "ui/page_mypage.py", "ui/sections/my_section.py",   # "add a page" examples
+    "data/cma/cma_<CCY>.csv", "data/cma/corr_<CCY>.csv",
+    "data/history/prices_<CCY>.csv",
+}
+
+# Every real source file, by bare name, so that the repository-map tree in
+# HOW_TO_NAVIGATE.md - which lists files as "analytics.py", without a folder -
+# resolves too. A bare name counts as found if some file in the repo has it.
+REAL_BASENAMES = set()
+for folder, folders, files in os.walk(PROJECT):
+    folders[:] = [f for f in folders
+                  if f not in {".venv", ".git", "__pycache__", "docs"}]
+    REAL_BASENAMES.update(files)
+
+missing_paths, missing_functions, checked_docs = [], [], 0
+
+for doc in DOC_FILES:
+    full = os.path.join(PROJECT, doc)
+    if not os.path.exists(full):
+        missing_paths.append(f"{doc} (the doc itself is missing)")
+        continue
+    checked_docs += 1
+    text = open(full, encoding="utf-8").read()
+
+    for path in sorted(set(PATH_RE.findall(text))):
+        if path in ALLOWED_MISSING or "<" in path:
+            continue
+        if "/" in path:                       # a full path: must be exactly that
+            if not os.path.exists(os.path.join(PROJECT, path)):
+                missing_paths.append(f"{doc} -> {path}")
+        elif path not in REAL_BASENAMES:      # a bare name: anywhere will do
+            missing_paths.append(f"{doc} -> {path}")
+
+    for path, function in sorted(set(PAIR_RE.findall(text))):
+        target = os.path.join(PROJECT, path)
+        if path in ALLOWED_MISSING or not os.path.exists(target):
+            continue                                   # path problem already logged
+        source = open(target, encoding="utf-8").read()
+        if not re.search(rf"^\s*def\s+{re.escape(function)}\s*\(", source, re.M):
+            missing_functions.append(f"{doc} -> {path} {function}()")
+
+check(checked_docs == len(DOC_FILES),
+      f"all {len(DOC_FILES)} documentation files are present")
+check(not missing_paths,
+      "every file path named in the docs exists"
+      + ("" if not missing_paths else f" -- BROKEN: {'; '.join(missing_paths)}"))
+check(not missing_functions,
+      "every function named in the docs exists"
+      + ("" if not missing_functions
+         else f" -- BROKEN: {'; '.join(missing_functions)}"))
+
+# The diagrams are only useful if they open. A truncated or badly edited SVG
+# is silently blank in a browser, so parse them rather than trusting them.
+import xml.dom.minidom                               # noqa: E402  (local to here)
+
+unparseable = []
+for doc in DOC_FILES:
+    if not doc.endswith(".svg"):
+        continue
+    try:
+        xml.dom.minidom.parse(os.path.join(PROJECT, doc))
+    except Exception as error:                       # noqa: BLE001
+        unparseable.append(f"{doc}: {error}")
+
+check(not unparseable,
+      "every diagram in docs/ is valid XML and will render"
+      + ("" if not unparseable else f" -- BROKEN: {'; '.join(unparseable)}"))
 
 
 # =========================================================================== #

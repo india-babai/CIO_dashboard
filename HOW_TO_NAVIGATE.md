@@ -22,6 +22,7 @@ want to make.
 10. [Eight things that will surprise you](#10-eight-things-that-will-surprise-you)
 11. [Troubleshooting](#11-troubleshooting)
 12. [Glossary](#12-glossary)
+13. [**Working on this with no AI to ask**](#13-working-on-this-with-no-ai-to-ask)
 
 ---
 
@@ -96,7 +97,7 @@ Then open the URL it prints (usually <http://localhost:8501>).
 ```bash
 .venv/Scripts/python.exe scripts/smoke_test.py
 ```
-Checks all the data and maths without launching the app. ~40 seconds, 67
+Checks all the data and maths without launching the app. ~40 seconds, 71
 checks. **Run this after every change.** If it passes, your problem is in the
 `ui/` folder; if it fails, it's in `core/` or your data.
 
@@ -190,9 +191,10 @@ CIO_dashboard/
 │   ├── generate_sample_data.py     (also calls the one below)
 │   └── generate_history_data.py
 │
-└── docs/
-    ├── page-1-portfolios.svg  ★ annotated diagram: screen region → file
-    └── page-2-cma.svg
+└── docs/                   ★ annotated diagrams: screen region → file
+    ├── page-1-portfolios.svg    the house table page
+    ├── page-2-backtest.svg      the backtesting page
+    └── page-3-cma.svg           the CMA inputs page
 ```
 
 **Every `.py` and `.css` file starts with a header block** telling you what it
@@ -236,9 +238,14 @@ The two exceptions, both deliberate:
 
 ## 5. What you see on screen → what draws it
 
-Open **`docs/page-1-portfolios.svg`** and **`docs/page-2-cma.svg`** in any web
-browser. They are annotated diagrams of both pages: every region of the screen
-is labelled with the file that draws it. That is the fastest way to find code.
+Open **`docs/page-1-portfolios.svg`**, **`docs/page-2-backtest.svg`** and
+**`docs/page-3-cma.svg`** in any web browser — double-clicking them works, no
+tooling needed. They are annotated diagrams: every region of the screen is
+labelled with the file that draws it. That is the fastest way to find code.
+
+They are also plain text you can edit in any editor. If you move something on
+screen, open the `.svg`, find the `<text class="file">` line naming the old
+file, and change it. The smoke test (§13) will tell you if you forget.
 
 The same information as text, top to bottom:
 
@@ -938,14 +945,156 @@ the problem is in.
 
 ---
 
+## 13. Working on this with no AI to ask
+
+This repository is meant to be maintained by one person with no assistant, so
+this section is the procedure for the two situations where people normally
+reach for one: *"something looks wrong and I cannot see why"* and *"I do not
+know where to start."*
+
+### 13.1 The one habit that matters: measure, do not eyeball
+
+The hardest bug in this project's history was a **3.5px** overlap between the
+sidebar group labels and the nav buttons. Two separate attempts to fix it by
+looking at screenshots changed things that were not the cause. What solved it
+in one step was printing numbers:
+
+```js
+// Browser: right-click the page -> Inspect -> Console tab -> paste -> Enter
+const sb = document.querySelector('[data-testid="stSidebar"]');
+const items = [...sb.querySelectorAll('.nav-group, .stButton button')]
+  .map(e => ({ what: e.innerText.trim(), ...e.getBoundingClientRect().toJSON() }))
+  .sort((a, b) => a.top - b.top);
+items.slice(1).forEach((it, i) =>
+  console.log(items[i].what, '->', it.what, (it.top - items[i].bottom).toFixed(1)));
+```
+
+Any negative number is an overlap, and it tells you exactly where and by how
+much. The cause turned out to be a `margin-bottom: -16px` that Streamlit puts
+on its own containers (§10.8) — something no amount of staring would reveal.
+
+**The general form.** When layout looks wrong, get `getBoundingClientRect()`
+for the elements involved and print the gaps. When a *number* looks wrong,
+print the inputs to the formula in `core/`. Do not reason about what the code
+probably does; make it tell you what it actually did.
+
+### 13.2 Why a Streamlit control ignores your CSS
+
+Streamlit's own class names (`st-emotion-cache-1aplgmp`) are generated and
+change between versions. The stable hook is `data-testid`. To find it:
+
+1. Right-click the control in the browser → **Inspect**.
+2. In the highlighted HTML, look up the tree for the nearest
+   `data-testid="st..."`.
+3. Use that in `ui/css/`. Add `!important` if it does not take.
+
+Three that are already known, and are easy to get wrong:
+
+| What you want | The selector that works |
+|---|---|
+| A segmented control's selected button | `[data-testid="stButtonGroup"] button[data-variant="segmented_control"][data-selected="true"]` |
+| A sidebar button's label | `[data-testid="stSidebar"] .stButton > button > div` — the label sits in an inner flex div |
+| Anything you add spacing to in the sidebar | zero `stMarkdownContainer`'s `-16px` first — see §10.8 |
+
+If a rule seems to do nothing at all, check **the browser cache before the
+CSS**: hard-refresh with Ctrl-Shift-R. That accounts for more "my CSS is
+broken" moments than any real bug.
+
+### 13.3 Bisecting a visual problem
+
+CSS has no stack trace, so bisect it:
+
+1. In `ui/styling.py`, comment out the CSS files one at a time and reload.
+   When the symptom disappears, the last file you removed contains it.
+2. Inside that file, comment out half the rules. Repeat.
+3. You will reach the offending rule in four or five reloads.
+
+This is quicker than reading, and it cannot be fooled by an assumption.
+
+### 13.4 The smoke test is your reviewer
+
+`scripts/smoke_test.py` is the closest thing to a second pair of eyes. Run it
+after **every** change:
+
+```bash
+.venv/Scripts/python.exe scripts/smoke_test.py
+```
+
+Because it imports nothing from `ui/`, where it fails tells you where to look:
+
+| Result | What it means |
+|---|---|
+| Passes, app looks wrong | The problem is in `ui/` — layout, CSS, a chart |
+| Fails in sections 1–9 | The problem is in `core/` or in your data |
+| Fails in section 10 | You renamed a file or function and the docs still name the old one |
+
+**Section 10 is there to stop this document rotting.** It reads every file
+path, and every *path-plus-function* pair, written in `HOW_TO_NAVIGATE.md`,
+`README.md` and the three diagrams, and checks they still exist. (It has
+already caught itself once: the sentence you are reading used a made-up
+filename as an example, and the check failed until it was reworded. That is
+the behaviour you want.) It exists
+because `docs/page-1-portfolios.svg` spent weeks pointing at two functions in
+`app.py` that had been deleted when the sidebar was built — exactly the kind
+of quiet decay that makes documentation worse than useless when there is no
+one to ask.
+
+So when it fails, **fix the document, do not delete the check.**
+
+**When you add a check of your own**, put it in the matching section and
+write it as `check(<expression that should be True>, "plain description")`.
+Prefer checks that compare two independent routes to the same number — the
+strongest test in this file rebuilds the backtest with a slow, obvious loop
+and asserts the fast version matches it to the last bit.
+
+### 13.5 Changing something safely
+
+The order that keeps you out of trouble:
+
+1. **Find the file** — §5 or the diagrams in `docs/`, not by searching blindly.
+2. **Read its header block.** Every `.py` and `.css` file starts with one
+   saying what it does and what to change where. They are current.
+3. **Check §6** — the change may already be a one-line `settings.toml` edit.
+4. **Make the change.** If it is a formula, it belongs in `core/`; if it is
+   appearance, in `ui/`. Never both in one file.
+5. **Run the smoke test.**
+6. **Look at the app**, and measure rather than squint (§13.1).
+
+### 13.6 If you break something badly
+
+Everything is in git, so nothing is lost:
+
+```bash
+git diff                      # what have I changed?
+git checkout -- path/to/file  # throw away my changes to one file
+git log --oneline -10         # the last ten commits
+git show <hash> -- path/to/file   # how that file looked at that commit
+```
+
+Commit before you start anything large, so `git diff` stays readable.
+
+### 13.7 Things that are expected, so do not "fix" them
+
+Before chasing any of these, they are correct by design and explained in §10:
+
+- Model portfolios sit **1–2pp below** the efficient frontier.
+- Backtested CAGR is **below** the CMA's expected return, by roughly ½σ².
+- The house table is **hand-written HTML**, not `st.dataframe`.
+- The tracking error of the benchmark scenario against itself is **0**.
+- Editing `settings.toml` or any `.py` needs a **restart**; editing `data/`
+  only needs the Reload button.
+- Two backtest lines sitting on top of each other — that *is* the finding.
+
+---
+
 ## One last thing
 
 The fastest way to find anything:
 
 0. If you are a *user* rather than a maintainer, the app's own **Start here**
    page answers most questions. This file is for changing the code.
-1. Open `docs/page-1-portfolios.svg` — find the region of the screen you care
-   about, read the filename on it.
+1. Open the diagram for the page you care about in `docs/` — find the region
+   of the screen, read the filename written next to it.
 2. Open that file — read the header block at the top.
 3. If you're changing a number, you're in `core/`. If you're changing how it
    looks, you're in `ui/`.

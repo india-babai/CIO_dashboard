@@ -17,7 +17,7 @@
 
   <rect class="bg" x="0" y="0" width="960" height="700"/>
 
-  <text class="title" x="30" y="34">PAGE 2 — Capital Market Assumptions</text>
+  <text class="title" x="30" y="34">PAGE 3 — Capital Market Assumptions  (reached from INPUTS in the sidebar)</text>
   <text class="sub"   x="30" y="55">The numbers every risk/return figure is built from. Edits here are private to your browser session.</text>
   <line x1="30" y1="66" x2="930" y2="66" stroke="#E4E4E4" stroke-width="1"/>
 

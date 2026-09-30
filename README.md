@@ -31,7 +31,7 @@ python -m venv .venv
 Two other commands:
 
 ```bash
-.venv/Scripts/python.exe scripts/smoke_test.py           # 67 checks, ~40s. Run after every change.
+.venv/Scripts/python.exe scripts/smoke_test.py           # 71 checks, ~40s. Run after every change.
 .venv/Scripts/python.exe scripts/generate_sample_data.py # rebuild ALL demo data incl. price history (OVERWRITES data/)
 ```
 

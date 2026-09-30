@@ -27,20 +27,28 @@
   <text class="sub"   x="30" y="55">Top to bottom, exactly as the page renders. Maroon monospace = the file to open.</text>
   <line x1="30" y1="66" x2="930" y2="66" stroke="#E4E4E4" stroke-width="1"/>
 
-  <!-- ================= 1 top bar ================= -->
-  <rect class="box" x="30" y="80" width="900" height="46"/>
-  <text class="name" x="46"  y="100">CIO. Model Portfolios</text>
-  <text class="desc" x="46"  y="116">black title bar + the “10 models · 16 asset classes” counts on the right</text>
-  <text class="file" x="920" y="103" text-anchor="end">app.py  _render_top_bar()</text>
+  <!-- ================= 1 + 2  the dark sidebar (on every page) =================
+       This replaced the old top bar and page pills. The two functions that
+       used to draw them were deleted from app.py; the navigation now lives
+       in ui/sidebar_nav.py.                                              -->
+  <rect class="box" x="30" y="80" width="900" height="96"/>
+  <rect x="42" y="88" width="150" height="80" rx="4" fill="#17161A"/>
+  <text x="54" y="106" font-size="13" font-weight="700" fill="#FFFFFF" font-family="Georgia, serif">CIO<tspan fill="#A8404F">.</tspan></text>
+  <text x="54" y="120" font-size="7" fill="#6E6A6B" letter-spacing="1">GUIDE</text>
+  <rect x="50" y="124" width="126" height="13" rx="3" fill="#7A1F2B"/>
+  <text x="56" y="133" font-size="7.5" fill="#FFFFFF">Start here</text>
+  <text x="54" y="147" font-size="7" fill="#6E6A6B" letter-spacing="1">ANALYSIS</text>
+  <text x="56" y="157" font-size="7.5" fill="#C9C2C0">Portfolios · Backtesting</text>
+  <text x="54" y="166" font-size="7" fill="#6E6A6B">INPUTS · REPORT</text>
 
-  <!-- ================= 2 nav ================= -->
-  <rect class="box" x="30" y="134" width="900" height="42"/>
-  <rect x="46" y="146" width="180" height="20" rx="10" fill="#EDF0F1" stroke="#E4E4E4"/>
-  <rect x="49" y="149" width="84"  height="14" rx="7"  fill="#FFFFFF"/>
-  <text x="60"  y="160" font-size="9" fill="#7A1F2B" font-weight="600">Portfolios</text>
-  <text x="146" y="160" font-size="9" fill="#7A6E71">Capital Mkt…</text>
-  <text class="desc" x="240" y="161">page pills  ·  “↻ Reload data” re-reads the data/ folder</text>
-  <text class="file" x="920" y="161" text-anchor="end">app.py  _render_navigation()</text>
+  <text class="name" x="206" y="102">The navigation — on every page</text>
+  <text class="desc" x="206" y="118">Four pages in three groups, then the “⬇ Build full report” button,</text>
+  <text class="desc" x="206" y="132">then the counts and “↻ Reload data”. The active item is the maroon one.</text>
+  <text class="desc" x="206" y="150">Add a page here: NAV_GROUPS, then one elif in app.py main().</text>
+  <text class="file"  x="920" y="106" text-anchor="end">ui/sidebar_nav.py</text>
+  <text class="file2" x="920" y="121" text-anchor="end">_render_brand() / NAV_GROUPS</text>
+  <text class="file2" x="920" y="136" text-anchor="end">_render_report_button()</text>
+  <text class="file2" x="920" y="151" text-anchor="end">styling: ui/css/06_sidebar.css</text>
 
   <!-- ================= 3 heading ================= -->
   <rect class="box" x="30" y="184" width="900" height="50"/>
