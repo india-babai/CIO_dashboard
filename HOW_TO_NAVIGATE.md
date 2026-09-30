@@ -780,25 +780,60 @@ for a whole report in roughly 8. `scripts/smoke_test.py` reimplements the old
 loop and asserts the two agree to the last bit — **if you touch
 `_rebalanced_daily_returns()`, keep that check passing.**
 
-### 10.8 Three CSS traps around the sidebar
+### 10.8 Four CSS traps around the sidebar
 
-All three produced a visible bug at some point, and all three are commented in
+All four produced a visible bug at some point, and all four are commented in
 the CSS. They are worth knowing before you next edit it.
 
-**1. `:first-of-type` matches every `.nav-group`.** Streamlit wraps *each*
-`st.markdown()` call in its own container. So the GUIDE, ANALYSIS and INPUTS
-headings are not siblings — each is the only child of its own wrapper, which
-makes every one of them the "first of type". A rule meant to remove the top
-margin from the first heading silently removed it from all of them, and the
-headings collided with the buttons above. Use a plain `margin` on
-`.nav-group`, not a `:first-of-type` exception.
+**1. Streamlit's `margin-bottom: -16px`, which is the one that actually caused
+the overlapping group labels.** Every `stMarkdownContainer` ships with a
+negative bottom margin. A negative bottom margin makes an element's *parent*
+report a smaller height than the content paints into — so "GUIDE" painted down
+to `y = 223.6` while its container claimed to end at `y = 215.6`, and the next
+nav button was laid out from 215.6, straight over the bottom 3.5px of the
+label.
+
+Two things made this hard to see. The overlap was only **3.5px**, and it
+happened to *every* group label equally — but the active nav item is the only
+one with a filled background, so GUIDE was the only place with anything to
+paint over the text. The others collided by exactly the same amount and looked
+perfectly fine.
+
+The fix is at the top of `ui/css/06_sidebar.css`: zero that margin for the
+sidebar, so every gap is then set by the `.nav-*` rules and nothing else. **If
+you add spacing in that file and it does not appear, this is what used to eat
+it.**
+
+The lesson worth carrying: *measure, do not eyeball.* Two earlier attempts at
+this bug changed a `:first-of-type` selector and a `line-height` — both were
+real improvements, neither was the cause, and the screenshot still looked
+wrong. What found it in one step was reading `getBoundingClientRect()` for
+every label and button and printing the gap between consecutive pairs. A
+negative number says exactly where and by how much:
+
+```js
+// paste in the browser console
+const sb = document.querySelector('[data-testid="stSidebar"]');
+const items = [...sb.querySelectorAll('.nav-group, .stButton button')]
+  .map(e => ({ what: e.innerText.trim(), ...e.getBoundingClientRect().toJSON() }))
+  .sort((a, b) => a.top - b.top);
+items.slice(1).forEach((it, i) =>
+  console.log(items[i].what, '->', it.what, (it.top - items[i].bottom).toFixed(1)));
+```
 
 **2. Display serifs need room.** The `CIO.` wordmark is set in Fraunces, a
 display serif whose glyphs paint outside a tight line box. At `line-height:
 1.15` the descenders overlapped the line below. Keep `.nav-brand .mark` at
 **1.3 or more**. The same applies if you swap in another display face.
 
-**3. Hiding Streamlit's header traps anyone who collapses the sidebar.**
+**3. `:first-of-type` matches every `.nav-group`.** Streamlit wraps *each*
+`st.markdown()` call in its own container, so the GUIDE, ANALYSIS and INPUTS
+headings are not siblings — each is the only child of its own wrapper, which
+makes every one of them the "first of type". A rule meant to zero the top
+margin on the first heading silently zeroed it on all of them. Use a plain
+`margin` on `.nav-group`, not a `:first-of-type` exception.
+
+**4. Hiding Streamlit's header traps anyone who collapses the sidebar.**
 `ui/css/02_streamlit_reset.css` used to carry
 `header[data-testid="stHeader"] { display: none }`. That looked right, but the
 `»` arrow that brings the sidebar *back* lives inside that header — so once a
@@ -852,7 +887,9 @@ the stable hook. Two that are easy to get wrong:
 | Backtest CAGR disagrees with the CMA | Expected — CMA is forward-looking arithmetic, backtest is realised geometric | Geometric return is always below arithmetic by roughly ½σ² |
 | Two backtest lines sit on top of each other | ESAA and DSAA differ by only a point or two of weight | That *is* the finding. Click a legend entry to isolate one. |
 | Sidebar disappeared | A CSS edit re-hid it | Check `ui/css/02_streamlit_reset.css` does not list `stSidebar` |
-| Collapsed the sidebar and cannot get it back | The `»` arrow lives in Streamlit's header — something re-hid it | §10.8 trap 3. Reload the page as a stopgap. |
+| Collapsed the sidebar and cannot get it back | The `»` arrow lives in Streamlit's header — something re-hid it | §10.8 trap 4. Reload the page as a stopgap. |
+| Sidebar labels sit on the nav buttons | Streamlit's `stMarkdownContainer { margin-bottom: -16px }` | §10.8 trap 1 — it is zeroed at the top of `ui/css/06_sidebar.css`. Check that rule is still there. |
+| Added a margin in `06_sidebar.css` and nothing moved | Same -16px eating it | §10.8 trap 1 |
 | Sidebar text sits on top of other text | A `:first-of-type` rule, or too tight a `line-height` on the wordmark | §10.8 — both traps are commented in `ui/css/06_sidebar.css` |
 | Sidebar nav labels are centred, not left-aligned | Streamlit centres the label in an inner flex `div` | Style `.stButton > button > div`, not the `button`. §10.8 |
 | Clicked "Build full report", nothing downloaded | The build raised | The error prints in the sidebar. Most often SciPy missing (no frontier sheets) or no `data/history/` file |

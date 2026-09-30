@@ -30,6 +30,29 @@
 [data-testid="stSidebarContent"] { background: var(--black) !important; }
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.28rem; }
 
+/* ---------------------------------------------------------------------------
+   THE -16px THAT CAUSED THE OVERLAPPING TEXT.  READ THIS BEFORE TOUCHING
+   ANY MARGIN IN THIS FILE.
+
+   Streamlit ships every stMarkdownContainer with `margin-bottom: -16px`. A
+   negative bottom margin makes an element's PARENT report a smaller height
+   than the content actually paints into. So a group label such as "GUIDE"
+   would paint down to y=223.6 while its container claimed to end at y=215.6,
+   and Streamlit would lay the next nav button out from 215.6 - straight over
+   the bottom 3.5px of the label.
+
+   It looked like only "GUIDE" was broken, because the active nav item is the
+   only one with a filled background; the others overlapped by exactly the
+   same amount but had nothing to paint over the text with.
+
+   Zeroing it here means every gap in this sidebar is set by the .nav-* rules
+   below and nothing else. If you add spacing and it does not appear, this
+   rule is what used to eat it.
+   --------------------------------------------------------------------------- */
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {
+  margin-bottom: 0 !important;
+}
+
 /* the collapse arrow — keep it, just make it visible on dark */
 [data-testid="stSidebarCollapseButton"] svg,
 [data-testid="stSidebarCollapseButton"] { color: #8A8385 !important; fill: #8A8385 !important; }
@@ -42,7 +65,7 @@
 .nav-brand {
   padding: 0.45rem 0 1.3rem 0;
   border-bottom: 1px solid #2A2830;
-  margin-bottom: 1.3rem;
+  margin-bottom: 0.35rem;      /* small: the rule above no longer eats 16px */
 }
 .nav-brand .mark {
   display: block;
@@ -65,11 +88,16 @@
    Each .nav-group is the ONLY child of its own Streamlit markdown wrapper,
    so ":first-of-type" matches every one of them - do not use it here to zero
    the top margin or the groups collide with the nav item above. The gap above
-   the first group comes from .nav-brand's margin-bottom instead.            */
+   the first group comes from .nav-brand's margin-bottom instead.
+
+   The bottom margin is only honoured because stMarkdownContainer's -16px is
+   zeroed at the top of this file. Measure, do not eyeball: the active item is
+   the only one that shows an overlap, so a 3px collision on the other three
+   is invisible.                                                             */
 .nav-group {
   font-size: 0.6rem; color: #6E6A6B; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.18em;
-  margin: 1.25rem 0 0.5rem 0.15rem;
+  margin: 1.25rem 0 0.55rem 0.15rem;
   line-height: 1.4;
 }
 
